@@ -2,321 +2,578 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>그 손가락이 문제였어요 - 귀여운 도미노</title>
     <style>
+        :root {
+            --ink: #292337;
+            --muted: #6f667c;
+            --purple: #6f52c7;
+            --coral: #ef6a68;
+            --coral-dark: #d94c55;
+            --mint: #30aa98;
+            --cream: #fff6df;
+            --honey: #f3bd5b;
+            --wood: #c7824c;
+            --glass: rgba(255, 255, 255, 0.82);
+            --shadow: 0 18px 45px rgba(55, 36, 72, 0.18);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             user-select: none;
             -webkit-user-select: none;
-            font-family: 'GmarketSansMedium', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'GmarketSansMedium', 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
         }
 
         body {
-            background-color: #2b2636;
+            background:
+                radial-gradient(circle at 17% 18%, rgba(239, 106, 104, 0.26), transparent 27%),
+                radial-gradient(circle at 83% 80%, rgba(111, 82, 199, 0.3), transparent 31%),
+                #17141f;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            min-height: 100dvh;
             overflow: hidden;
         }
 
         /* 스마트폰 앱 프레임 */
         #app {
             width: 100%;
-            max-width: 420px;
+            max-width: 430px;
             height: 100vh;
-            max-height: 880px;
-            background: linear-gradient(180deg, #E0F7FA 0%, #FFF9C4 100%);
+            height: 100dvh;
+            max-height: 900px;
+            background: linear-gradient(180deg, #f7e9d4 0%, #f5d8c7 56%, #d8c4df 100%);
             position: relative;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-            border-radius: 20px;
+            isolation: isolate;
+            box-shadow: 0 28px 80px rgba(8, 5, 17, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 28px;
         }
 
-        /* 캔버스 레이어링 */
-        #bgCanvas {
+        #app::after {
+            content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        #gameCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            display: block;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
+            border-radius: inherit;
         }
 
         /* 상단 HUD */
         header {
             position: absolute;
-            top: 16px;
+            top: max(16px, env(safe-area-inset-top));
             left: 16px;
             right: 16px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 10px;
             z-index: 10;
         }
 
+        .grac-badge,
+        .score-board,
+        .hp-board {
+            border: 1px solid rgba(255,255,255,0.9);
+            background: var(--glass);
+            box-shadow: 0 8px 22px rgba(73, 50, 94, 0.11);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
         .grac-badge {
-            background: rgba(255, 255, 255, 0.85);
-            color: #6C5CE7;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            color: var(--purple);
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
         }
 
         .hud-area {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 6px;
+            gap: 7px;
         }
 
         .score-board {
-            font-size: 14px;
-            font-weight: bold;
-            color: #4A4E69;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 6px 16px;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            min-width: 148px;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--muted);
+            padding: 7px 13px 7px 15px;
+            border-radius: 16px;
+            text-align: right;
         }
 
         .score-board span {
-            color: #FF7675;
-            font-size: 16px;
+            color: var(--coral-dark);
+            font-size: 19px;
+            font-variant-numeric: tabular-nums;
+            margin-left: 3px;
         }
 
         /* 생명 하트 바 */
         .hp-board {
             display: flex;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.85);
-            padding: 6px 12px;
-            border-radius: 18px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            gap: 5px;
+            padding: 6px 10px;
+            border-radius: 15px;
         }
 
         .heart-container {
             width: 22px;
             height: 22px;
             position: relative;
+            filter: drop-shadow(0 2px 2px rgba(216, 56, 79, 0.18));
         }
 
-        .heart-bg {
-            font-size: 18px;
-            opacity: 0.25;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
+        .heart-bg,
         .heart-fill {
-            font-size: 18px;
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
+            font-size: 18px;
+            line-height: 22px;
+        }
+
+        .heart-bg { filter: grayscale(1); opacity: 0.18; }
+        .heart-fill {
             overflow: hidden;
             width: 100%;
-            transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         /* 화면 레이어 오버레이 */
         .overlay-screen {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 243, 228, 0.93);
-            backdrop-filter: blur(10px);
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 29%, rgba(255,255,255,0.96), rgba(255,248,228,0.64) 34%, transparent 57%),
+                linear-gradient(160deg, rgba(248,232,207,0.97), rgba(243,211,197,0.95) 58%, rgba(207,188,219,0.97));
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 24px;
+            padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
             z-index: 20;
             transition: opacity 0.3s ease;
         }
 
-        .hidden {
-            display: none !important;
+        .overlay-screen::before,
+        .overlay-screen::after {
+            content: '';
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            filter: blur(2px);
+            opacity: 0.34;
+            z-index: -1;
+        }
+
+        .overlay-screen::before { top: -74px; right: -68px; background: #f4bd59; }
+        .overlay-screen::after { bottom: -92px; left: -66px; background: #8e71ce; }
+
+        .hidden { display: none !important; }
+
+        .eyebrow {
+            color: var(--purple);
+            background: rgba(255,255,255,0.72);
+            border: 1px solid rgba(255,255,255,0.9);
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            margin-bottom: 12px;
+            box-shadow: 0 7px 20px rgba(95, 67, 126, 0.1);
         }
 
         .title-text {
-            font-size: 30px;
+            font-size: clamp(30px, 8vw, 38px);
             font-weight: 900;
-            color: #2D3436;
-            margin-bottom: 6px;
+            color: var(--ink);
+            margin-bottom: 5px;
             text-align: center;
-            line-height: 1.25;
+            line-height: 1.18;
+            letter-spacing: -0.045em;
+            text-shadow: 0 2px 0 rgba(255,255,255,0.82);
+        }
+
+        .title-text .accent {
+            color: var(--coral-dark);
+            background: linear-gradient(135deg, #ff6372, #8a5df1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .subtitle-text {
             font-size: 14px;
-            color: #6C5CE7;
-            font-weight: bold;
-            margin-bottom: 20px;
+            line-height: 1.5;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        #startMascotCanvas {
+            width: 260px;
+            height: 145px;
+            margin: 2px 0 5px;
+            filter: drop-shadow(0 16px 14px rgba(90, 57, 111, 0.13));
+            animation: mascotFloat 2.6s ease-in-out infinite alternate;
         }
 
         /* 울고 있는 브릭 캔버스 */
         #cryingBrickCanvas {
-            width: 120px;
-            height: 130px;
-            margin-bottom: 12px;
+            width: 136px;
+            height: 142px;
+            margin: 4px 0 8px;
+            filter: drop-shadow(0 14px 12px rgba(90, 57, 111, 0.13));
         }
 
         .best-score {
-            font-size: 14px;
-            color: #636E72;
+            width: min(100%, 286px);
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--muted);
             margin-bottom: 20px;
-            background: #FFF;
-            padding: 10px 28px;
+            background: rgba(255,255,255,0.82);
+            padding: 11px 26px 12px;
             border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.92);
+            box-shadow: var(--shadow);
             text-align: center;
         }
 
         .best-score strong {
-            font-size: 26px;
-            color: #FF7675;
+            font-size: 27px;
+            line-height: 1.15;
+            color: var(--coral-dark);
             display: block;
-            margin-top: 4px;
+            margin-top: 2px;
+            letter-spacing: -0.04em;
+        }
+
+        button {
+            font: inherit;
+            touch-action: manipulation;
+        }
+
+        .btn-main,
+        .btn-sub {
+            width: 100%;
+            max-width: 286px;
+            cursor: pointer;
+            font-weight: 900;
+            transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
         }
 
         .btn-main {
-            width: 100%;
-            max-width: 280px;
-            padding: 16px;
-            background: linear-gradient(135deg, #FF7675 0%, #D63031 100%);
+            padding: 16px 18px;
+            background: linear-gradient(135deg, #f47d70 0%, #e85e62 52%, #cf4657 100%);
             color: #fff;
-            border: none;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(255, 118, 117, 0.4);
-            transition: transform 0.1s;
+            border: 1px solid rgba(255,255,255,0.34);
+            border-radius: 19px;
+            font-size: 17px;
+            box-shadow: 0 11px 0 #bf3651, 0 18px 30px rgba(224, 58, 86, 0.28);
+            text-shadow: 0 1px 1px rgba(119, 20, 41, 0.18);
         }
 
-        .btn-main:active {
-            transform: scale(0.96);
-        }
+        .btn-main:hover { filter: brightness(1.035); transform: translateY(-1px); }
+        .btn-main:active { transform: translateY(7px); box-shadow: 0 4px 0 #bf3651, 0 9px 18px rgba(224, 58, 86, 0.22); }
+        .btn-main:focus-visible,
+        .btn-sub:focus-visible { outline: 4px solid rgba(115,87,232,0.27); outline-offset: 3px; }
 
         .btn-sub {
-            width: 100%;
-            max-width: 280px;
-            padding: 12px;
-            background: #FFF;
-            color: #636E72;
-            border: 2px solid #E0E0E0;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.76);
+            color: var(--muted);
+            border: 1px solid rgba(255,255,255,0.95);
             border-radius: 16px;
             font-size: 14px;
-            font-weight: bold;
-            margin-top: 8px;
+            margin-top: 16px;
+            box-shadow: 0 8px 18px rgba(83, 60, 103, 0.1);
+        }
+
+        .btn-sub:hover { background: #fff; transform: translateY(-1px); }
+        .btn-sub:active { transform: scale(0.98); }
+
+        /* 버그 리포트 */
+        .bug-report-trigger {
+            position: absolute;
+            left: 16px;
+            top: max(62px, calc(env(safe-area-inset-top) + 48px));
+            z-index: 35;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 11px;
+            color: #5f526b;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(255,255,255,0.92);
+            border-radius: 999px;
+            box-shadow: 0 8px 20px rgba(40,28,50,0.14);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-size: 12px;
+            font-weight: 800;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: transform 0.16s ease, background 0.16s ease;
         }
 
-        .btn-sub:active {
-            background-color: #F5F5F5;
+        .bug-report-trigger:hover { background: #fff; transform: translateY(-1px); }
+        .bug-report-trigger:active { transform: scale(0.97); }
+        .bug-report-trigger:focus-visible { outline: 4px solid rgba(111,82,199,0.27); outline-offset: 3px; }
+
+        .bug-modal {
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(29,22,37,0.56);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
-        /* 친구에게 소개하기 버튼 스타일 */
-        .btn-invite {
-            background: #6C5CE7;
-            color: #FFF;
-            border: none;
-            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+        .bug-sheet {
+            width: 100%;
+            max-width: 390px;
+            max-height: calc(100dvh - 36px);
+            overflow-y: auto;
+            padding: 20px;
+            color: var(--ink);
+            background: linear-gradient(160deg, #fff9ea, #f4e5dc);
+            border: 1px solid rgba(255,255,255,0.9);
+            border-radius: 26px;
+            box-shadow: 0 26px 70px rgba(20,13,27,0.38);
+            animation: sheetUp 0.24s cubic-bezier(0.22,1,0.36,1);
         }
 
-        .btn-invite:active {
-            background-color: #5B4BC4;
+        .bug-sheet-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 17px;
+        }
+
+        .bug-sheet-title { font-size: 21px; line-height: 1.25; letter-spacing: -0.035em; }
+        .bug-sheet-copy { margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+        .bug-close {
+            flex: 0 0 auto;
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 50%;
+            color: var(--muted);
+            background: rgba(70,52,80,0.08);
+            font-size: 19px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .bug-field { display: block; margin-top: 14px; }
+        .bug-field > span { display: block; margin: 0 0 7px 2px; font-size: 13px; font-weight: 900; }
+        .bug-field select,
+        .bug-field textarea {
+            width: 100%;
+            color: var(--ink);
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(92,69,101,0.18);
+            border-radius: 14px;
+            padding: 12px 13px;
+            font-size: 16px;
+            line-height: 1.45;
+            outline: none;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        .bug-field textarea { min-height: 112px; resize: vertical; }
+        .bug-field select:focus,
+        .bug-field textarea:focus { border-color: var(--purple); box-shadow: 0 0 0 4px rgba(111,82,199,0.12); }
+
+        .bug-auto-info {
+            display: flex;
+            gap: 9px;
+            margin-top: 13px;
+            padding: 10px 12px;
+            color: #64586e;
+            background: rgba(111,82,199,0.08);
+            border-radius: 13px;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .bug-actions { display: grid; grid-template-columns: 1fr 1.45fr; gap: 9px; margin-top: 17px; }
+        .bug-action {
+            min-height: 47px;
+            padding: 11px 13px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .bug-action.cancel { color: var(--muted); background: rgba(255,255,255,0.6); border: 1px solid rgba(90,68,100,0.13); }
+        .bug-action.send { color: #fff; background: linear-gradient(135deg, #7560bf, #5a429e); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 8px 18px rgba(80,57,138,0.24); }
+        .bug-status { min-height: 20px; margin-top: 8px; color: #b43e4c; font-size: 12px; font-weight: 800; text-align: center; }
+
+        .toast {
+            position: absolute;
+            left: 50%;
+            bottom: max(24px, env(safe-area-inset-bottom));
+            z-index: 80;
+            transform: translateX(-50%);
+            width: max-content;
+            max-width: calc(100% - 40px);
+            padding: 11px 16px;
+            color: #fff;
+            background: rgba(42,33,49,0.92);
+            border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 999px;
+            box-shadow: 0 14px 32px rgba(23,15,29,0.3);
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        @keyframes sheetUp {
+            from { transform: translateY(18px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
 
         /* 하단 조작계 */
         .controls-area {
             position: absolute;
-            bottom: 36px;
+            bottom: max(28px, env(safe-area-inset-bottom));
             left: 0;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             z-index: 10;
+            pointer-events: none;
         }
 
         .brick-info-tag {
-            font-size: 12px;
-            font-weight: bold;
-            color: #6C5CE7;
-            background: #FFF;
-            padding: 4px 12px;
-            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--purple);
+            background: rgba(255,255,255,0.9);
+            padding: 6px 13px;
+            border-radius: 999px;
             margin-bottom: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            border: 1px solid #fff;
+            box-shadow: 0 7px 18px rgba(77,52,97,0.12);
         }
 
         .timing-bar-container {
-            width: 80%;
-            height: 22px;
-            background: rgba(255,255,255,0.9);
-            border-radius: 12px;
+            width: min(82%, 336px);
+            height: 26px;
+            background:
+                repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), rgba(89,73,113,0.08) calc(10% - 1px), rgba(89,73,113,0.08) 10%),
+                rgba(255,255,255,0.9);
+            border-radius: 999px;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             margin-bottom: 12px;
-            border: 3px solid #FFF;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 4px solid rgba(255,255,255,0.95);
+            box-shadow: 0 9px 24px rgba(73,49,94,0.15), inset 0 1px 4px rgba(64,46,83,0.08);
         }
 
         .target-zone {
             position: absolute;
             top: 0;
             height: 100%;
-            background: linear-gradient(90deg, #00B894 0%, #55E6C1 100%);
-            border-radius: 6px;
-            transition: all 0.2s ease;
+            background: linear-gradient(90deg, #16b991 0%, #50ddbc 50%, #16b991 100%);
+            border-radius: 999px;
+            box-shadow: inset 0 2px 2px rgba(255,255,255,0.45), 0 0 14px rgba(50,201,166,0.45);
+            transition: left 0.2s ease, width 0.2s ease;
+        }
+
+        .target-zone::after {
+            content: '여기!';
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: rgba(22,96,80,0.75);
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
         }
 
         .slider-pin {
             position: absolute;
-            top: 0;
-            width: 8px;
-            height: 100%;
-            background: #FF7675;
-            border-radius: 4px;
-            box-shadow: 0 0 8px #FF7675;
+            top: -6px;
+            width: 9px;
+            height: 30px;
+            background: #fff;
+            border: 3px solid var(--coral);
+            border-radius: 999px;
+            box-shadow: 0 3px 8px rgba(224,58,86,0.28), 0 0 0 3px rgba(255,111,119,0.16);
+            transform: translateX(-50%);
         }
 
         .tap-instruction {
-            font-size: 13px;
-            font-weight: bold;
-            color: #2D3436;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 18px;
-            border-radius: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            animation: bounce 1.2s infinite alternate;
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--ink);
+            background: rgba(255,255,255,0.9);
+            padding: 9px 18px;
+            border-radius: 999px;
+            border: 1px solid #fff;
+            box-shadow: 0 8px 22px rgba(75,52,96,0.12);
+            animation: floatHint 1.2s ease-in-out infinite alternate;
         }
 
-        @keyframes bounce {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-4px); }
+        @keyframes floatHint {
+            from { transform: translateY(0); }
+            to { transform: translateY(-4px); }
+        }
+
+        @keyframes mascotFloat {
+            from { transform: translateY(1px) rotate(-0.4deg); }
+            to { transform: translateY(-5px) rotate(0.4deg); }
+        }
+
+        @media (max-width: 480px), (max-height: 700px) {
+            #app { max-height: none; border: 0; border-radius: 0; }
+            .overlay-screen { justify-content: center; }
+            #startMascotCanvas { width: 230px; height: 128px; }
+            .title-text { font-size: 30px; }
+            .best-score { margin-bottom: 17px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
         }
     </style>
 </head>
@@ -335,11 +592,11 @@
         </div>
     </header>
 
-    <!-- 1. 배경 산 & 바나나 연출 캔버스 -->
-    <canvas id="bgCanvas"></canvas>
-
-    <!-- 2. 게임 메인 캔버스 -->
     <canvas id="gameCanvas"></canvas>
+
+    <button id="bugReportButton" class="bug-report-trigger" type="button" onclick="openBugReport()" aria-haspopup="dialog" aria-controls="bugReportModal">
+        🐞 버그 신고
+    </button>
 
     <div id="controls" class="controls-area hidden">
         <div id="brickTag" class="brick-info-tag">📏 보통 도미노</div>
@@ -347,25 +604,29 @@
             <div id="targetZone" class="target-zone"></div>
             <div id="sliderPin" class="slider-pin"></div>
         </div>
-        <div class="tap-instruction">✨ 터치해서 도미노 세우기!</div>
+        <div class="tap-instruction">🐾 타이밍에 맞춰 터치!</div>
     </div>
 
     <!-- 시작 화면 -->
     <div id="startScreen" class="overlay-screen">
-        <h1 class="title-text">그 손가락이<br>문제였어요 🐾</h1>
-        <p class="subtitle-text">(귀여운 도미노 세우기)</p>
+        <div class="eyebrow">CAT'S TOY ROOM</div>
+        <h1 class="title-text">그 손가락이<br><span class="accent">문제였어요!</span></h1>
+        <p class="subtitle-text">냥이 몰래 장난감 도미노를 세워주세요</p>
+
+        <canvas id="startMascotCanvas" aria-hidden="true"></canvas>
         
         <div class="best-score">
             최고 연속 기록
             <strong id="startBestScore">0개</strong>
         </div>
 
-        <button class="btn-main" onclick="startGame()">도미노 세우기 시작</button>
+        <button class="btn-main" onclick="startGame()">조심조심 세우기 🐾</button>
     </div>
 
     <!-- 엔딩 화면 -->
     <div id="endScreen" class="overlay-screen hidden">
-        <h1 class="title-text">GAME OVER 💥</h1>
+        <div class="eyebrow">OH, NO!</div>
+        <h1 class="title-text"><span class="accent">도미노가 와르르!</span></h1>
         <p class="subtitle-text">도미노가 모두 무너졌어요!</p>
         
         <canvas id="cryingBrickCanvas"></canvas>
@@ -375,269 +636,54 @@
             <strong id="finalScore">0개</strong>
         </div>
 
-        <button class="btn-main" onclick="startGame()">다시 세우기</button>
-        <button class="btn-sub" onclick="shareResult()">결과 공유하기</button>
-        <button class="btn-sub btn-invite" onclick="inviteFriends()">친구에게 소개하기 💌</button>
+        <button class="btn-main" onclick="startGame()">다시 세우기 🔄</button>
+        <button class="btn-sub" onclick="alert('결과가 복사되었습니다!')">결과 공유하기</button>
     </div>
+
+    <!-- 버그 리포트 작성 창 -->
+    <div id="bugReportModal" class="bug-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bugReportTitle" onclick="handleBugBackdrop(event)">
+        <section class="bug-sheet">
+            <div class="bug-sheet-header">
+                <div>
+                    <h2 id="bugReportTitle" class="bug-sheet-title">버그 리포트 보내기 🐾</h2>
+                    <p class="bug-sheet-copy">어떤 문제가 있었는지 알려주시면 게임 상태와 기기 정보가 함께 정리됩니다.</p>
+                </div>
+                <button class="bug-close" type="button" onclick="closeBugReport()" aria-label="버그 리포트 닫기">×</button>
+            </div>
+
+            <label class="bug-field">
+                <span>문제 유형</span>
+                <select id="bugCategory">
+                    <option value="게임 진행">게임 진행</option>
+                    <option value="화면·그래픽">화면·그래픽</option>
+                    <option value="터치·조작">터치·조작</option>
+                    <option value="점수·기록">점수·기록</option>
+                    <option value="기타">기타</option>
+                </select>
+            </label>
+
+            <label class="bug-field">
+                <span>무슨 일이 있었나요?</span>
+                <textarea id="bugDescription" maxlength="600" placeholder="예: 하트를 터치했는데 생명이 회복되지 않았어요."></textarea>
+            </label>
+
+            <div class="bug-auto-info">
+                <span aria-hidden="true">🔎</span>
+                <span>현재 점수, 생명, 게임 상태, 화면 크기와 브라우저 정보가 자동으로 포함됩니다.</span>
+            </div>
+
+            <div class="bug-actions">
+                <button class="bug-action cancel" type="button" onclick="closeBugReport()">취소</button>
+                <button class="bug-action send" type="button" onclick="submitBugReport()">공유·복사하기</button>
+            </div>
+            <p id="bugStatus" class="bug-status" role="status" aria-live="polite"></p>
+        </section>
+    </div>
+
+    <div id="reportToast" class="toast hidden" role="status" aria-live="polite"></div>
 </div>
 
 <script>
-    /* ===================================================
-     * 1. 🍌 배경 산골짜기 & 바나나 튀어나오는 연출 로직
-     * =================================================== */
-    const bgCanvas = document.getElementById('bgCanvas');
-    const bgCtx = bgCanvas.getContext('2d');
-
-    let clouds = [];
-    let mountains = [];
-    let bananas = [];
-    let lastBananaTime = 0;
-    let nextBananaDelay = 1000;
-
-    function initBg() {
-        resizeBgCanvas();
-        createClouds();
-        createMountains();
-        requestAnimationFrame(animateBg);
-    }
-
-    function resizeBgCanvas() {
-        const rect = bgCanvas.parentElement.getBoundingClientRect();
-        bgCanvas.width = rect.width;
-        bgCanvas.height = rect.height;
-        createClouds();
-        createMountains();
-    }
-
-    function createClouds() {
-        clouds = [
-            { x: bgCanvas.width * 0.1, y: bgCanvas.height * 0.15, size: 28, speed: 0.2 },
-            { x: bgCanvas.width * 0.5, y: bgCanvas.height * 0.08, size: 36, speed: 0.15 },
-            { x: bgCanvas.width * 0.8, y: bgCanvas.height * 0.22, size: 24, speed: 0.25 }
-        ];
-    }
-
-    function createMountains() {
-        mountains = [
-            {
-                color: '#A1E8AF',
-                borderColor: '#81C784',
-                peakX: bgCanvas.width * 0.25,
-                peakY: bgCanvas.height * 0.48,
-                leftX: -bgCanvas.width * 0.2,
-                rightX: bgCanvas.width * 0.7,
-                baseY: bgCanvas.height
-            },
-            {
-                color: '#B9F6CA',
-                borderColor: '#A1E8AF',
-                peakX: bgCanvas.width * 0.75,
-                peakY: bgCanvas.height * 0.45,
-                leftX: bgCanvas.width * 0.3,
-                rightX: bgCanvas.width * 1.2,
-                baseY: bgCanvas.height
-            },
-            {
-                color: '#81C784',
-                borderColor: '#66BB6A',
-                peakX: bgCanvas.width * 0.5,
-                peakY: bgCanvas.height * 0.58,
-                leftX: -bgCanvas.width * 0.1,
-                rightX: bgCanvas.width * 1.1,
-                baseY: bgCanvas.height
-            },
-            {
-                color: '#66BB6A',
-                borderColor: '#4CAF50',
-                peakX: bgCanvas.width * 0.15,
-                peakY: bgCanvas.height * 0.68,
-                leftX: -bgCanvas.width * 0.3,
-                rightX: bgCanvas.width * 0.6,
-                baseY: bgCanvas.height
-            },
-            {
-                color: '#52B788',
-                borderColor: '#40916C',
-                peakX: bgCanvas.width * 0.82,
-                peakY: bgCanvas.height * 0.65,
-                leftX: bgCanvas.width * 0.4,
-                rightX: bgCanvas.width * 1.2,
-                baseY: bgCanvas.height
-            }
-        ];
-    }
-
-    class PopUpBanana {
-        constructor() {
-            const sourceMountain = mountains[Math.floor(Math.random() * mountains.length)];
-            
-            this.startX = sourceMountain.peakX + (Math.random() - 0.5) * 60;
-            this.startY = sourceMountain.peakY + 20;
-
-            this.x = this.startX;
-            this.y = this.startY;
-
-            this.vx = (Math.random() - 0.5) * 4;
-            this.vy = -(10 + Math.random() * 5);
-            this.gravity = 0.38;
-
-            this.angle = Math.random() * Math.PI * 2;
-            this.rotSpeed = (Math.random() - 0.5) * 0.15;
-            this.scale = 0.8 + Math.random() * 0.4;
-            this.faceType = Math.floor(Math.random() * 3);
-
-            this.isDead = false;
-        }
-
-        update() {
-            this.x += this.vx;
-            this.y += this.vy;
-            this.vy += this.gravity;
-            this.angle += this.rotSpeed;
-
-            if (this.y > bgCanvas.height + 50) {
-                this.isDead = true;
-            }
-        }
-
-        draw() {
-            bgCtx.save();
-            bgCtx.translate(this.x, this.y);
-            bgCtx.rotate(this.angle);
-            bgCtx.scale(this.scale, this.scale);
-
-            bgCtx.beginPath();
-            bgCtx.moveTo(-20, -5);
-            bgCtx.quadraticCurveTo(0, -25, 20, -5);
-            bgCtx.quadraticCurveTo(5, 20, -20, -5);
-            bgCtx.fillStyle = '#FFE033';
-            bgCtx.fill();
-
-            bgCtx.strokeStyle = '#FBC02D';
-            bgCtx.lineWidth = 2.5;
-            bgCtx.stroke();
-
-            bgCtx.fillStyle = '#7CB342';
-            bgCtx.beginPath();
-            bgCtx.arc(-20, -5, 3, 0, Math.PI * 2);
-            bgCtx.arc(20, -5, 2.5, 0, Math.PI * 2);
-            bgCtx.fill();
-
-            bgCtx.fillStyle = '#2E7D32';
-            bgCtx.strokeStyle = '#2E7D32';
-            bgCtx.lineWidth = 1.5;
-
-            if (this.faceType === 0) {
-                bgCtx.beginPath();
-                bgCtx.arc(-5, -2, 2, Math.PI, 0);
-                bgCtx.arc(5, -2, 2, Math.PI, 0);
-                bgCtx.stroke();
-            } else if (this.faceType === 1) {
-                bgCtx.beginPath();
-                bgCtx.arc(-5, -2, 2, 0, Math.PI * 2);
-                bgCtx.arc(5, -2, 2, 0, Math.PI * 2);
-                bgCtx.fill();
-            } else {
-                bgCtx.beginPath();
-                bgCtx.arc(5, -2, 2, Math.PI, 0);
-                bgCtx.stroke();
-
-                bgCtx.beginPath();
-                bgCtx.moveTo(-7, -4); bgCtx.lineTo(-3, -2); bgCtx.lineTo(-7, 0);
-                bgCtx.stroke();
-            }
-
-            bgCtx.fillStyle = 'rgba(255, 138, 128, 0.7)';
-            bgCtx.beginPath();
-            bgCtx.arc(-7, 2, 2, 0, Math.PI * 2);
-            bgCtx.arc(7, 2, 2, 0, Math.PI * 2);
-            bgCtx.fill();
-
-            bgCtx.restore();
-        }
-    }
-
-    function drawCloud(cloud) {
-        bgCtx.save();
-        bgCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        bgCtx.beginPath();
-        bgCtx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
-        bgCtx.arc(cloud.x - cloud.size * 0.7, cloud.y + 4, cloud.size * 0.65, 0, Math.PI * 2);
-        bgCtx.arc(cloud.x + cloud.size * 0.7, cloud.y + 4, cloud.size * 0.65, 0, Math.PI * 2);
-        bgCtx.fill();
-        bgCtx.restore();
-
-        cloud.x += cloud.speed;
-        if (cloud.x - cloud.size * 2 > bgCanvas.width) {
-            cloud.x = -cloud.size * 2;
-        }
-    }
-
-    function drawMountain(m) {
-        bgCtx.save();
-        bgCtx.beginPath();
-        bgCtx.moveTo(m.leftX, m.baseY);
-        bgCtx.quadraticCurveTo((m.leftX + m.peakX) / 2, m.peakY, m.peakX, m.peakY);
-        bgCtx.quadraticCurveTo((m.peakX + m.rightX) / 2, m.peakY, m.rightX, m.baseY);
-        bgCtx.closePath();
-
-        bgCtx.fillStyle = m.color;
-        bgCtx.fill();
-
-        bgCtx.strokeStyle = m.borderColor;
-        bgCtx.lineWidth = 4;
-        bgCtx.stroke();
-
-        bgCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        bgCtx.beginPath();
-        bgCtx.arc(m.peakX, m.peakY + 12, 6, 0, Math.PI * 2);
-        bgCtx.fill();
-
-        bgCtx.restore();
-    }
-
-    function animateBg(timestamp) {
-        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-
-        let skyGrad = bgCtx.createLinearGradient(0, 0, 0, bgCanvas.height);
-        skyGrad.addColorStop(0, '#E0F7FA');
-        skyGrad.addColorStop(0.6, '#FFF9C4');
-        skyGrad.addColorStop(1, '#C8E6C9');
-        bgCtx.fillStyle = skyGrad;
-        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-
-        clouds.forEach(drawCloud);
-
-        drawMountain(mountains[0]);
-        drawMountain(mountains[1]);
-
-        if (timestamp - lastBananaTime > nextBananaDelay) {
-            bananas.push(new PopUpBanana());
-            lastBananaTime = timestamp;
-            nextBananaDelay = 1200 + Math.random() * 1800;
-        }
-
-        for (let i = bananas.length - 1; i >= 0; i--) {
-            let b = bananas[i];
-            b.update();
-            b.draw();
-
-            if (b.isDead) {
-                bananas.splice(i, 1);
-            }
-        }
-
-        drawMountain(mountains[2]);
-        drawMountain(mountains[3]);
-        drawMountain(mountains[4]);
-
-        requestAnimationFrame(animateBg);
-    }
-
-
-    /* ===================================================
-     * 2. 🎮 메인 도미노 게임 로직
-     * =================================================== */
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -650,8 +696,15 @@
     const targetZone = document.getElementById('targetZone');
     const sliderPin = document.getElementById('sliderPin');
     const brickTag = document.getElementById('brickTag');
+    const startMascotCanvas = document.getElementById('startMascotCanvas');
+    const startMascotCtx = startMascotCanvas.getContext('2d');
     const cryingCanvas = document.getElementById('cryingBrickCanvas');
     const cryingCtx = cryingCanvas.getContext('2d');
+    const bugReportModal = document.getElementById('bugReportModal');
+    const bugCategory = document.getElementById('bugCategory');
+    const bugDescription = document.getElementById('bugDescription');
+    const bugStatus = document.getElementById('bugStatus');
+    const reportToast = document.getElementById('reportToast');
 
     const heartElements = [
         document.getElementById('heart0'),
@@ -664,8 +717,8 @@
     let particles = [];
     let fallingHearts = [];
     let score = 0;
-    let combo = 0;
-    let comboAnimScale = 0;
+    let combo = 0; // 🔥 콤보 카운터
+    let comboAnimScale = 0; // 콤보 애니메이션 스케일
     let bestScore = localStorage.getItem('domino_best') || 0;
     
     const MAX_HP = 9;
@@ -682,41 +735,448 @@
     let targetStart = 35;
     let targetWidth = 30;
 
-    let nextBrickConfig = { height: 75, name: '보통 도미노', baseWidth: 28 };
+    let viewWidth = 430;
+    let viewHeight = 900;
+    let cryingWidth = 136;
+    let cryingHeight = 142;
+    let mascotWidth = 260;
+    let mascotHeight = 145;
+    let isBugReportOpen = false;
+    let reportSnapshot = null;
+    let reportToastTimer = null;
 
-    // 💧 울고 있는 브릭의 눈물 애니메이션 상태 관리 변수
-    let cryingAnimId = null;
-    let tearDrops = [];
+    let nextBrickConfig = { height: 75, name: '보통 도미노', baseWidth: 28 };
 
     function init() {
         resizeCanvas();
-        initBg();
         startBestScoreEl.innerText = `${bestScore}개`;
-        window.addEventListener('resize', () => {
-            resizeCanvas();
-            resizeBgCanvas();
+        drawStartMascots();
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && isBugReportOpen) closeBugReport();
         });
         canvas.addEventListener('pointerdown', handleCanvasClick);
     }
 
     function resizeCanvas() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        cryingCanvas.width = 120;
-        cryingCanvas.height = 130;
+        const oldHeight = viewHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        viewWidth = rect.width;
+        viewHeight = rect.height;
+        canvas.width = Math.round(viewWidth * dpr);
+        canvas.height = Math.round(viewHeight * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        if (oldHeight && dominos.length) {
+            const yShift = viewHeight - oldHeight;
+            dominos.forEach(domino => domino.y += yShift);
+        }
+
+        const cryingRect = cryingCanvas.getBoundingClientRect();
+        cryingWidth = cryingRect.width || 136;
+        cryingHeight = cryingRect.height || 142;
+        cryingCanvas.width = Math.round(cryingWidth * dpr);
+        cryingCanvas.height = Math.round(cryingHeight * dpr);
+        cryingCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const mascotRect = startMascotCanvas.getBoundingClientRect();
+        mascotWidth = mascotRect.width || 260;
+        mascotHeight = mascotRect.height || 145;
+        startMascotCanvas.width = Math.round(mascotWidth * dpr);
+        startMascotCanvas.height = Math.round(mascotHeight * dpr);
+        startMascotCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawStartMascots();
+
+        if (gameState === 'END') drawCryingBrick();
+    }
+
+    function openBugReport() {
+        reportSnapshot = {
+            capturedAt: new Date().toISOString(),
+            gameState,
+            score,
+            bestScore: Number(bestScore),
+            combo,
+            hp: currentHp,
+            dominoCount: dominos.length,
+            viewport: `${Math.round(viewWidth)} × ${Math.round(viewHeight)}`,
+            language: navigator.language || 'unknown',
+            userAgent: navigator.userAgent || 'unknown'
+        };
+        isBugReportOpen = true;
+        bugStatus.textContent = '';
+        bugReportModal.classList.remove('hidden');
+        setTimeout(() => bugDescription.focus(), 60);
+    }
+
+    function closeBugReport() {
+        isBugReportOpen = false;
+        bugReportModal.classList.add('hidden');
+        bugStatus.textContent = '';
+        document.getElementById('bugReportButton').focus();
+    }
+
+    function handleBugBackdrop(event) {
+        if (event.target === bugReportModal) closeBugReport();
+    }
+
+    function buildBugReportText() {
+        const snapshot = reportSnapshot || {};
+        const description = bugDescription.value.trim();
+        return [
+            '[그 손가락이 문제였어요 - 버그 리포트]',
+            '',
+            `문제 유형: ${bugCategory.value}`,
+            `문제 내용: ${description}`,
+            '',
+            '--- 자동 첨부 정보 ---',
+            `발생 시각(UTC): ${snapshot.capturedAt || new Date().toISOString()}`,
+            `게임 상태: ${snapshot.gameState || gameState}`,
+            `현재 점수: ${snapshot.score ?? score}`,
+            `최고 기록: ${snapshot.bestScore ?? Number(bestScore)}`,
+            `콤보: ${snapshot.combo ?? combo}`,
+            `생명: ${snapshot.hp ?? currentHp}/${MAX_HP}`,
+            `도미노 수: ${snapshot.dominoCount ?? dominos.length}`,
+            `게임 화면: ${snapshot.viewport || `${Math.round(viewWidth)} × ${Math.round(viewHeight)}`}`,
+            `언어: ${snapshot.language || navigator.language || 'unknown'}`,
+            `브라우저: ${snapshot.userAgent || navigator.userAgent || 'unknown'}`
+        ].join('\n');
+    }
+
+    async function copyReportText(reportText) {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(reportText);
+            return;
+        }
+
+        const fallback = document.createElement('textarea');
+        fallback.value = reportText;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.appendChild(fallback);
+        fallback.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(fallback);
+        if (!copied) throw new Error('copy_failed');
+    }
+
+    function showReportToast(message) {
+        clearTimeout(reportToastTimer);
+        reportToast.textContent = message;
+        reportToast.classList.remove('hidden');
+        reportToastTimer = setTimeout(() => reportToast.classList.add('hidden'), 2800);
+    }
+
+    async function submitBugReport() {
+        const description = bugDescription.value.trim();
+        if (description.length < 5) {
+            bugStatus.textContent = '문제 상황을 5자 이상 적어주세요.';
+            bugDescription.focus();
+            return;
+        }
+
+        const reportText = buildBugReportText();
+        bugStatus.textContent = '';
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: '도미노 게임 버그 리포트',
+                    text: reportText
+                });
+                bugDescription.value = '';
+                closeBugReport();
+                showReportToast('버그 리포트 공유창을 열었습니다.');
+                return;
+            }
+
+            await copyReportText(reportText);
+            bugDescription.value = '';
+            closeBugReport();
+            showReportToast('리포트가 복사되었습니다. 원하는 곳에 붙여넣어 주세요.');
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            try {
+                await copyReportText(reportText);
+                bugDescription.value = '';
+                closeBugReport();
+                showReportToast('리포트가 복사되었습니다. 원하는 곳에 붙여넣어 주세요.');
+            } catch (copyError) {
+                bugStatus.textContent = '공유하지 못했습니다. 내용을 복사해 직접 전달해 주세요.';
+            }
+        }
+    }
+
+    function roundedPath(context, x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        context.beginPath();
+        context.moveTo(x + r, y);
+        context.arcTo(x + width, y, x + width, y + height, r);
+        context.arcTo(x + width, y + height, x, y + height, r);
+        context.arcTo(x, y + height, x, y, r);
+        context.arcTo(x, y, x + width, y, r);
+        context.closePath();
+    }
+
+    function drawMiniDomino(context, x, baseY, width, height, color, edge, angle = 0, expression = 'happy') {
+        context.save();
+        context.translate(x, baseY);
+        context.rotate(angle);
+
+        context.fillStyle = 'rgba(65,42,83,0.13)';
+        context.beginPath();
+        context.ellipse(4, 4, width * 0.82, 5, 0, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = edge;
+        context.beginPath();
+        context.moveTo(width / 2 - 1, -height + 7);
+        context.lineTo(width / 2 + 6, -height + 11);
+        context.lineTo(width / 2 + 6, -3);
+        context.lineTo(width / 2 - 1, 0);
+        context.closePath();
+        context.fill();
+
+        const gradient = context.createLinearGradient(-width / 2, 0, width / 2, 0);
+        gradient.addColorStop(0, 'rgba(255,255,255,0.46)');
+        gradient.addColorStop(0.32, color);
+        gradient.addColorStop(1, color);
+        context.fillStyle = gradient;
+        context.strokeStyle = '#fff';
+        context.lineWidth = 2.5;
+        roundedPath(context, -width / 2, -height, width, height, 8);
+        context.fill();
+        context.stroke();
+
+        const faceY = -height + 22;
+        context.fillStyle = '#3b324b';
+        context.strokeStyle = '#3b324b';
+        context.lineWidth = 1.7;
+        context.beginPath();
+        context.arc(-4, faceY, 2, 0, Math.PI * 2);
+        context.arc(4, faceY, 2, 0, Math.PI * 2);
+        context.fill();
+        context.beginPath();
+        if (expression === 'happy') context.arc(0, faceY + 2, 4, 0, Math.PI);
+        else context.arc(0, faceY + 8, 4, Math.PI, 0);
+        context.stroke();
+
+        context.fillStyle = 'rgba(255,92,119,0.65)';
+        context.beginPath();
+        context.arc(-7, faceY + 5, 2.2, 0, Math.PI * 2);
+        context.arc(7, faceY + 5, 2.2, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+
+    function drawPawStamp(context, x, y, size, color, rotation = 0) {
+        context.save();
+        context.translate(x, y);
+        context.rotate(rotation);
+        context.fillStyle = color;
+        context.beginPath();
+        context.ellipse(0, size * 0.2, size * 0.42, size * 0.35, 0, 0, Math.PI * 2);
+        context.fill();
+        [[-0.42,-0.24],[-0.14,-0.43],[0.18,-0.43],[0.44,-0.2]].forEach(([px, py]) => {
+            context.beginPath();
+            context.ellipse(px * size, py * size, size * 0.16, size * 0.2, px * 0.25, 0, Math.PI * 2);
+            context.fill();
+        });
+        context.restore();
+    }
+
+    function drawCatPaw(context, x, y, scale = 1, rotation = 0) {
+        context.save();
+        context.translate(x, y);
+        context.rotate(rotation);
+        context.scale(scale, scale);
+
+        const fur = context.createLinearGradient(-22, -78, 28, 18);
+        fur.addColorStop(0, '#fffaf0');
+        fur.addColorStop(1, '#e8d5c7');
+        context.fillStyle = fur;
+        context.strokeStyle = '#6f5966';
+        context.lineWidth = 2.6;
+        roundedPath(context, -25, -92, 50, 92, 23);
+        context.fill();
+        context.stroke();
+
+        context.fillStyle = '#ef9aa2';
+        context.beginPath();
+        context.ellipse(0, -18, 11, 9, 0, 0, Math.PI * 2);
+        context.fill();
+        [[-14,-30],[-5,-37],[5,-37],[14,-30]].forEach(([px, py]) => {
+            context.beginPath();
+            context.ellipse(px, py, 5, 6, 0, 0, Math.PI * 2);
+            context.fill();
+        });
+
+        context.strokeStyle = 'rgba(255,255,255,0.72)';
+        context.lineWidth = 3;
+        context.lineCap = 'round';
+        context.beginPath();
+        context.moveTo(-14, -77);
+        context.lineTo(-14, -57);
+        context.stroke();
+        context.restore();
+    }
+
+    function drawStartMascots() {
+        if (!startMascotCtx || !mascotWidth || !mascotHeight) return;
+        startMascotCtx.clearRect(0, 0, mascotWidth, mascotHeight);
+
+        const glow = startMascotCtx.createRadialGradient(mascotWidth / 2, 70, 10, mascotWidth / 2, 70, 110);
+        glow.addColorStop(0, 'rgba(255,250,224,0.95)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        startMascotCtx.fillStyle = glow;
+        startMascotCtx.fillRect(0, 0, mascotWidth, mascotHeight);
+
+        const baseY = mascotHeight - 14;
+        startMascotCtx.strokeStyle = 'rgba(111,70,49,0.18)';
+        startMascotCtx.lineWidth = 4;
+        startMascotCtx.lineCap = 'round';
+        startMascotCtx.beginPath();
+        startMascotCtx.moveTo(26, baseY + 2);
+        startMascotCtx.quadraticCurveTo(mascotWidth / 2, baseY - 5, mascotWidth - 26, baseY + 2);
+        startMascotCtx.stroke();
+
+        drawMiniDomino(startMascotCtx, mascotWidth / 2 - 68, baseY, 28, 78, '#e96d68', '#b94e4f', -0.04);
+        drawMiniDomino(startMascotCtx, mascotWidth / 2 - 16, baseY, 30, 103, '#5c9b91', '#39756e', 0.02);
+        drawMiniDomino(startMascotCtx, mascotWidth / 2 + 37, baseY, 28, 68, '#e9b653', '#bd8332', 0.06);
+        drawCatPaw(startMascotCtx, mascotWidth - 28, 51, 0.82, -0.63);
+
+        drawPawStamp(startMascotCtx, 28, 39, 10, 'rgba(111,82,199,0.34)', -0.2);
+        drawPawStamp(startMascotCtx, 47, 17, 7, 'rgba(239,106,104,0.3)', 0.25);
+        drawPawStamp(startMascotCtx, 226, 112, 8, 'rgba(48,170,152,0.28)', -0.35);
+    }
+
+    function drawCloud(context, x, y, scale = 1, alpha = 0.82) {
+        context.save();
+        context.globalAlpha = alpha;
+        context.fillStyle = '#fff';
+        context.beginPath();
+        context.arc(x, y, 22 * scale, 0, Math.PI * 2);
+        context.arc(x - 20 * scale, y + 6 * scale, 15 * scale, 0, Math.PI * 2);
+        context.arc(x + 22 * scale, y + 7 * scale, 17 * scale, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+
+    function drawSceneBackground(floorY, cameraOffsetX) {
+        /* 해 질 무렵의 고양이 장난감방 */
+        const wall = ctx.createLinearGradient(0, 0, 0, floorY);
+        wall.addColorStop(0, '#493f63');
+        wall.addColorStop(0.5, '#806b83');
+        wall.addColorStop(1, '#c4958f');
+        ctx.fillStyle = wall;
+        ctx.fillRect(0, 0, viewWidth, floorY);
+
+        const lampGlow = ctx.createRadialGradient(viewWidth - 74, 164, 5, viewWidth - 74, 164, 112);
+        lampGlow.addColorStop(0, 'rgba(255,225,151,0.7)');
+        lampGlow.addColorStop(0.42, 'rgba(255,204,129,0.24)');
+        lampGlow.addColorStop(1, 'rgba(255,204,129,0)');
+        ctx.fillStyle = lampGlow;
+        ctx.fillRect(viewWidth - 196, 42, 196, 230);
+
+        /* 작은 달 창문 */
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,225,151,0.35)';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#f9dfa2';
+        ctx.beginPath();
+        ctx.arc(viewWidth - 66, 168, 38, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(65,52,81,0.52)';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(viewWidth - 66, 168, 43, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(viewWidth - 109, 168);
+        ctx.lineTo(viewWidth - 23, 168);
+        ctx.moveTo(viewWidth - 66, 125);
+        ctx.lineTo(viewWidth - 66, 211);
+        ctx.stroke();
+        ctx.restore();
+
+        /* 벽지의 은은한 발자국 무늬 */
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 5; col++) {
+                const x = 35 + col * 88 + (row % 2) * 28 + cameraOffsetX * 0.015;
+                const y = 128 + row * 86;
+                drawPawStamp(ctx, x, y, 7, 'rgba(255,255,255,0.055)', (col - row) * 0.12);
+            }
+        }
+
+        /* 멀리 보이는 장난감 선반 */
+        ctx.fillStyle = 'rgba(50,39,61,0.22)';
+        roundedPath(ctx, -28, floorY - 113, 184, 20, 10);
+        ctx.fill();
+        ctx.fillRect(-14, floorY - 93, 10, 93);
+        ctx.fillRect(139, floorY - 93, 10, 93);
+        ctx.beginPath();
+        ctx.arc(38, floorY - 126, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(16, floorY - 134);
+        ctx.lineTo(25, floorY - 154);
+        ctx.lineTo(34, floorY - 134);
+        ctx.moveTo(42, floorY - 134);
+        ctx.lineTo(51, floorY - 154);
+        ctx.lineTo(60, floorY - 134);
+        ctx.fill();
+
+        /* 도미노가 놓이는 원목 테이블 */
+        const floorGradient = ctx.createLinearGradient(0, floorY, 0, viewHeight);
+        floorGradient.addColorStop(0, '#d99a5d');
+        floorGradient.addColorStop(0.12, '#c9824d');
+        floorGradient.addColorStop(1, '#a65f3c');
+        ctx.fillStyle = floorGradient;
+        ctx.fillRect(-2000, floorY, 10000, viewHeight - floorY);
+
+        ctx.strokeStyle = 'rgba(83,43,31,0.48)';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(-2000, floorY);
+        ctx.lineTo(10000, floorY);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255,226,185,0.2)';
+        ctx.lineWidth = 2;
+        for (let y = floorY + 38; y < viewHeight; y += 46) {
+            ctx.beginPath();
+            ctx.moveTo(-100 + (cameraOffsetX * 0.05) % 70, y);
+            ctx.bezierCurveTo(viewWidth * 0.28, y - 7, viewWidth * 0.7, y + 8, viewWidth + 100, y - 2);
+            ctx.stroke();
+        }
+
+        /* 작업대 위의 위치 표시 테이프 */
+        ctx.strokeStyle = 'rgba(255,239,194,0.45)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([11, 15]);
+        ctx.beginPath();
+        ctx.moveTo(-2000 + (cameraOffsetX % 26), floorY + 48);
+        ctx.lineTo(10000, floorY + 48);
+        ctx.stroke();
+        ctx.setLineDash([]);
     }
 
     class CuteDomino {
         constructor(x, y, heightConfig, colorTheme) {
             this.x = x;
             this.y = y;
-            this.width = 18;
+            this.width = 20;
             this.height = heightConfig.height;
             this.angle = 0;
             this.colorTheme = colorTheme;
             this.isFalling = false;
             this.faceType = Math.floor(Math.random() * 3);
+            this.pop = 0.72;
+            this.grainOffset = Math.random() * 9;
         }
 
         draw() {
@@ -724,21 +1184,61 @@
             ctx.translate(this.x, this.y);
             ctx.rotate(this.angle * Math.PI / 180);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            if (!isBugReportOpen) this.pop += (1 - this.pop) * 0.16;
+            ctx.scale(this.pop, this.pop);
+
+            /* 바닥 그림자 */
+            ctx.fillStyle = 'rgba(70, 47, 89, 0.14)';
             ctx.beginPath();
-            ctx.ellipse(0, 4, this.width * 1.1, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(4, 5, this.width * 1.18, 6, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = this.colorTheme.main;
+            /* 오른쪽 측면을 더해 작은 장난감 블록처럼 입체적으로 표현 */
+            ctx.fillStyle = this.colorTheme.edge;
+            ctx.beginPath();
+            ctx.moveTo(this.width / 2 - 1, -this.height + 7);
+            ctx.lineTo(this.width / 2 + 6, -this.height + 12);
+            ctx.lineTo(this.width / 2 + 6, -3);
+            ctx.lineTo(this.width / 2 - 1, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            const bodyGradient = ctx.createLinearGradient(-this.width / 2, 0, this.width / 2, 0);
+            bodyGradient.addColorStop(0, this.colorTheme.light);
+            bodyGradient.addColorStop(0.42, this.colorTheme.main);
+            bodyGradient.addColorStop(1, this.colorTheme.main);
+            ctx.fillStyle = bodyGradient;
             this.drawRoundRect(-this.width/2, -this.height, this.width, this.height, 8);
             ctx.fill();
 
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = 'rgba(255,255,255,0.94)';
+            ctx.lineWidth = 2.2;
             this.drawRoundRect(-this.width/2, -this.height, this.width, this.height, 8);
             ctx.stroke();
 
-            ctx.fillStyle = '#2D3436';
+            /* 광택 */
+            ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-this.width / 2 + 5, -this.height + 10);
+            ctx.lineTo(-this.width / 2 + 5, -this.height + Math.min(28, this.height * 0.35));
+            ctx.stroke();
+
+            /* 나무 장난감의 결 무늬와 공방 발도장 */
+            ctx.strokeStyle = 'rgba(79,47,55,0.13)';
+            ctx.lineWidth = 1;
+            for (let gy = -this.height + 39 + this.grainOffset; gy < -12; gy += 17) {
+                ctx.beginPath();
+                ctx.moveTo(-this.width / 2 + 4, gy);
+                ctx.quadraticCurveTo(0, gy - 2, this.width / 2 - 4, gy + 1);
+                ctx.stroke();
+            }
+            drawPawStamp(ctx, 0, -Math.max(19, this.height * 0.3), 4.7, 'rgba(67,48,65,0.28)', -0.12);
+
+            ctx.fillStyle = '#3b324b';
+            ctx.strokeStyle = '#3b324b';
+            ctx.lineWidth = 1.5;
             const faceY = -this.height + 20;
 
             if (this.faceType === 0) {
@@ -748,7 +1248,7 @@
                 ctx.fill();
                 
                 ctx.beginPath();
-                ctx.arc(0, faceY + 2, 2.5, 0, Math.PI);
+                ctx.arc(0, faceY + 2, 2.6, 0, Math.PI);
                 ctx.stroke();
             } else if (this.faceType === 1) {
                 ctx.beginPath();
@@ -765,7 +1265,7 @@
                 ctx.stroke();
             }
 
-            ctx.fillStyle = 'rgba(255, 118, 117, 0.6)';
+            ctx.fillStyle = 'rgba(255, 104, 124, 0.68)';
             ctx.beginPath();
             ctx.arc(-5, faceY + 4, 2, 0, Math.PI * 2);
             ctx.arc(5, faceY + 4, 2, 0, Math.PI * 2);
@@ -788,6 +1288,7 @@
     class FallingHeart {
         constructor(startX, startY) {
             this.x = startX;
+            this.baseXRatio = startX / Math.max(viewWidth, 1);
             this.y = startY;
             this.size = 28;
             this.speedY = 1.8 + Math.random() * 1.2;
@@ -799,32 +1300,47 @@
         update() {
             this.time += 1;
             this.y += this.speedY;
-            this.x += Math.sin(this.time * this.swingFreq) * (this.swingAmp * 0.05);
+            const baseX = viewWidth * this.baseXRatio;
+            const desiredX = baseX + Math.sin(this.time * this.swingFreq) * this.swingAmp;
+            const sidePadding = this.size * 0.85;
+            this.x = Math.max(sidePadding, Math.min(viewWidth - sidePadding, desiredX));
         }
 
-        draw(cameraX) {
+        draw() {
             ctx.save();
-            ctx.translate(this.x + cameraX, this.y);
+            ctx.translate(this.x, this.y);
             const scale = 1 + Math.sin(this.time * 0.1) * 0.08;
             ctx.scale(scale, scale);
 
-            ctx.font = `${this.size}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('❤️', 0, 0);
-            
-            ctx.strokeStyle = 'rgba(255, 118, 117, 0.5)';
-            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(236,91,99,0.55)';
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = '#ef676c';
             ctx.beginPath();
-            ctx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
+            ctx.moveTo(0, 11);
+            ctx.bezierCurveTo(-5, 5, -14, 0, -14, -8);
+            ctx.bezierCurveTo(-14, -18, -2, -21, 0, -12);
+            ctx.bezierCurveTo(2, -21, 14, -18, 14, -8);
+            ctx.bezierCurveTo(14, 0, 5, 5, 0, 11);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+            ctx.lineWidth = 2;
             ctx.stroke();
+            ctx.strokeStyle = 'rgba(255, 229, 183, 0.65)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3, 4]);
+            ctx.beginPath();
+            ctx.arc(0, -4, this.size * 0.72, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             ctx.restore();
         }
 
-        isTouched(touchX, touchY, cameraX) {
-            const screenX = this.x + cameraX;
-            const dist = Math.hypot(screenX - touchX, this.y - touchY);
+        isTouched(touchX, touchY) {
+            const dist = Math.hypot(this.x - touchX, this.y - touchY);
             return dist < this.size * 1.2;
         }
     }
@@ -837,7 +1353,8 @@
             this.vy = (Math.random() - 0.8) * 6;
             this.alpha = 1.0;
             this.size = Math.random() * 5 + 3;
-            this.color = color || ['#FF7675', '#00CEC9', '#FFEAA7', '#6C5CE7'][Math.floor(Math.random() * 4)];
+            this.color = color || ['#e96d68', '#5c9b91', '#f2c76b', '#8b72c2'][Math.floor(Math.random() * 4)];
+            this.shape = Math.random() < 0.42 ? 'paw' : 'spark';
         }
 
         update() {
@@ -851,9 +1368,25 @@
             ctx.save();
             ctx.globalAlpha = this.alpha;
             ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(this.x + cameraX, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 7;
+            ctx.translate(this.x + cameraX, this.y);
+            ctx.rotate((1 - this.alpha) * 4);
+            if (this.shape === 'paw') {
+                drawPawStamp(ctx, 0, 0, this.size * 1.25, this.color, 0);
+            } else {
+                ctx.beginPath();
+                for (let i = 0; i < 8; i++) {
+                    const radius = i % 2 === 0 ? this.size : this.size * 0.38;
+                    const angle = -Math.PI / 2 + (Math.PI / 4) * i;
+                    const px = Math.cos(angle) * radius;
+                    const py = Math.sin(angle) * radius;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
             ctx.restore();
         }
     }
@@ -879,11 +1412,6 @@
     }
 
     function startGame() {
-        if (cryingAnimId) {
-            cancelAnimationFrame(cryingAnimId);
-            cryingAnimId = null;
-        }
-
         score = 0;
         combo = 0;
         comboAnimScale = 0;
@@ -926,7 +1454,7 @@
     }
 
     function handleCanvasClick(e) {
-        if (gameState !== 'PLAYING') return;
+        if (gameState !== 'PLAYING' || isBugReportOpen) return;
 
         const rect = canvas.getBoundingClientRect();
         const touchX = e.clientX - rect.left;
@@ -935,14 +1463,15 @@
         let cameraX = 0;
         if (dominos.length > 0) {
             const lastDomino = dominos[dominos.length - 1];
-            if (lastDomino.x > canvas.width * 0.55) {
-                cameraX = canvas.width * 0.55 - lastDomino.x;
+            if (lastDomino.x > viewWidth * 0.55) {
+                cameraX = viewWidth * 0.55 - lastDomino.x;
             }
         }
 
+        // 하트 터치 세이브 검사
         for (let i = fallingHearts.length - 1; i >= 0; i--) {
             let heart = fallingHearts[i];
-            if (heart.isTouched(touchX, touchY, cameraX)) {
+            if (heart.isTouched(touchX, touchY)) {
                 fallingHearts.splice(i, 1);
                 currentHp = Math.min(MAX_HP, currentHp + 3);
                 updateHpUI();
@@ -962,8 +1491,8 @@
 
         if (success) {
             score++;
-            combo++;
-            comboAnimScale = 1.6;
+            combo++; // 🔥 콤보 증가!
+            comboAnimScale = 1.6; // 콤보 팝업 애니메이션 시작
 
             currentScoreEl.innerText = score;
             
@@ -972,7 +1501,7 @@
             }
 
             if (score % 10 === 0) {
-                const cloudX = canvas.width / 2;
+                const cloudX = viewWidth / 2;
                 fallingHearts.push(new FallingHeart(cloudX, 150));
             }
 
@@ -980,7 +1509,7 @@
             if (lastDomino) {
                 const pCount = Math.min(8 + combo * 2, 20);
                 for (let i = 0; i < pCount; i++) {
-                    particles.push(new StarParticle(lastDomino.x, canvas.height - 150 - lastDomino.height));
+                    particles.push(new StarParticle(lastDomino.x, viewHeight - 150 - lastDomino.height));
                 }
             }
 
@@ -989,6 +1518,7 @@
             addDomino();
             updateTargetZone();
         } else {
+            // 실수 발생 -> 💥 콤보 리셋!
             combo = 0;
             comboAnimScale = 0;
 
@@ -1013,15 +1543,15 @@
         const currentX = startX + (dominos.length * spacing);
 
         const cuteThemes = [
-            { main: '#FF7675' },
-            { main: '#74B9FF' },
-            { main: '#55E6C1' },
-            { main: '#FFEAA7' },
-            { main: '#A29BFE' }
+            { main: '#e96d68', light: '#f4a293', edge: '#b94e4f' },
+            { main: '#5c9b91', light: '#91c8ba', edge: '#39756e' },
+            { main: '#e9b653', light: '#f6d88b', edge: '#bd8332' },
+            { main: '#8b72c2', light: '#b9a8df', edge: '#604d96' },
+            { main: '#d98e5d', light: '#efbd91', edge: '#a6603d' }
         ];
         const selectedTheme = cuteThemes[dominos.length % cuteThemes.length];
         
-        dominos.push(new CuteDomino(currentX, canvas.height - 150, nextBrickConfig, selectedTheme));
+        dominos.push(new CuteDomino(currentX, viewHeight - 150, nextBrickConfig, selectedTheme));
     }
 
     function triggerExplosionGameOver() {
@@ -1040,6 +1570,7 @@
         let index = dominos.length - 1;
         
         const collapseInterval = setInterval(() => {
+            if (isBugReportOpen) return;
             if (index >= 0) {
                 dominos[index].isFalling = true;
                 screenShake = 3;
@@ -1060,51 +1591,58 @@
 
         finalScoreEl.innerText = `${score}개`;
         endScreen.classList.remove('hidden');
-        
-        // 눈물 입자 데이터 초기화 및 애니메이션 구동 시작
-        tearDrops = [
-            { side: -1, yOffset: 0, speed: 2.2, scale: 1 },
-            { side: 1, yOffset: -12, speed: 2.8, scale: 0.85 }
-        ];
-        animateCryingBrick();
+        drawCryingBrick();
     }
 
-    /* 💧 눈물이 흐르는 엔딩 브릭 애니메이션 */
-    function animateCryingBrick() {
-        if (gameState !== 'END') return;
-
-        cryingCtx.clearRect(0, 0, cryingCanvas.width, cryingCanvas.height);
+    function drawCryingBrick() {
+        cryingCtx.clearRect(0, 0, cryingWidth, cryingHeight);
         
-        const cx = cryingCanvas.width / 2;
-        const cy = cryingCanvas.height - 20;
+        const cx = cryingWidth / 2;
+        const cy = cryingHeight - 20;
+
+        const glow = cryingCtx.createRadialGradient(cx, cy - 50, 8, cx, cy - 50, 66);
+        glow.addColorStop(0, 'rgba(255,255,255,0.82)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        cryingCtx.fillStyle = glow;
+        cryingCtx.fillRect(0, 0, cryingWidth, cryingHeight);
 
         cryingCtx.save();
         cryingCtx.translate(cx, cy);
 
-        // 바닥 그림자
-        cryingCtx.fillStyle = 'rgba(0,0,0,0.1)';
+        cryingCtx.fillStyle = 'rgba(70,45,88,0.12)';
         cryingCtx.beginPath();
-        cryingCtx.ellipse(0, 5, 20, 6, 0, 0, Math.PI * 2);
+        cryingCtx.ellipse(5, 6, 27, 7, 0, 0, Math.PI * 2);
         cryingCtx.fill();
 
-        // 브릭 몸통
-        cryingCtx.fillStyle = '#FF7675';
+        cryingCtx.fillStyle = 'rgba(92,173,239,0.26)';
+        cryingCtx.beginPath();
+        cryingCtx.ellipse(-20, 9, 13, 4, -0.12, 0, Math.PI * 2);
+        cryingCtx.ellipse(20, 9, 11, 3.5, 0.12, 0, Math.PI * 2);
+        cryingCtx.fill();
+
+        cryingCtx.fillStyle = '#dc4a5d';
+        cryingCtx.beginPath();
+        cryingCtx.moveTo(17, -77);
+        cryingCtx.lineTo(24, -72);
+        cryingCtx.lineTo(24, -4);
+        cryingCtx.lineTo(17, 0);
+        cryingCtx.closePath();
+        cryingCtx.fill();
+
+        const sadGradient = cryingCtx.createLinearGradient(-18, 0, 18, 0);
+        sadGradient.addColorStop(0, '#ff9da0');
+        sadGradient.addColorStop(0.35, '#ff6f77');
+        sadGradient.addColorStop(1, '#f05b68');
+        cryingCtx.fillStyle = sadGradient;
         cryingCtx.strokeStyle = '#FFFFFF';
         cryingCtx.lineWidth = 3;
         
         const w = 36, h = 85, r = 10;
-        cryingCtx.beginPath();
-        cryingCtx.moveTo(-w/2 + r, -h);
-        cryingCtx.arcTo(w/2, -h, w/2, 0, r);
-        cryingCtx.arcTo(w/2, 0, -w/2, 0, r);
-        cryingCtx.arcTo(-w/2, 0, -w/2, -h, r);
-        cryingCtx.arcTo(-w/2, -h, w/2, -h, r);
-        cryingCtx.closePath();
+        roundedPath(cryingCtx, -w/2, -h, w, h, r);
         cryingCtx.fill();
         cryingCtx.stroke();
 
-        // 울상 눈 표현
-        cryingCtx.strokeStyle = '#2D3436';
+        cryingCtx.fillStyle = '#2D3436';
         cryingCtx.lineWidth = 2.5;
 
         cryingCtx.beginPath();
@@ -1115,103 +1653,80 @@
         cryingCtx.arc(8, -h + 28, 4, Math.PI, 0);
         cryingCtx.stroke();
 
-        // 입 표현
         cryingCtx.beginPath();
         cryingCtx.moveTo(-4, -h + 40);
         cryingCtx.lineTo(0, -h + 36);
         cryingCtx.lineTo(4, -h + 40);
         cryingCtx.stroke();
 
-        // 💧 또르르 흘러내리는 눈물 표현
-        const startEyeY = -h + 32;
-        const maxDropY = -10;
+        cryingCtx.fillStyle = '#74B9FF';
+        cryingCtx.beginPath();
+        cryingCtx.ellipse(-8, -h + 48, 3, 10, 0, 0, Math.PI * 2);
+        cryingCtx.ellipse(8, -h + 48, 3, 10, 0, 0, Math.PI * 2);
+        cryingCtx.fill();
 
-        tearDrops.forEach(drop => {
-            drop.yOffset += drop.speed;
-            
-            let currentDropY = startEyeY + drop.yOffset;
-
-            if (currentDropY > maxDropY) {
-                drop.yOffset = 0;
-                currentDropY = startEyeY;
-            }
-
-            const dropX = drop.side * 8;
-            const dropAlpha = Math.min(1, Math.max(0.1, (maxDropY - currentDropY) / (maxDropY - startEyeY)));
-
+        cryingCtx.fillStyle = '#f2b83f';
+        [[-40,-54,3], [40,-35,2.5], [-34,-15,2]].forEach(([x,y,s]) => {
             cryingCtx.save();
-            cryingCtx.globalAlpha = dropAlpha;
-            cryingCtx.fillStyle = '#74B9FF';
-            cryingCtx.strokeStyle = '#0984E3';
-            cryingCtx.lineWidth = 1;
-
-            cryingCtx.beginPath();
-            cryingCtx.moveTo(dropX, currentDropY - 5 * drop.scale);
-            cryingCtx.quadraticCurveTo(dropX + 4 * drop.scale, currentDropY + 2 * drop.scale, dropX, currentDropY + 5 * drop.scale);
-            cryingCtx.quadraticCurveTo(dropX - 4 * drop.scale, currentDropY + 2 * drop.scale, dropX, currentDropY - 5 * drop.scale);
-            cryingCtx.fill();
-            cryingCtx.stroke();
+            cryingCtx.translate(x, y);
+            cryingCtx.rotate(Math.PI / 4);
+            cryingCtx.fillRect(-s/2, -s*1.6, s, s*3.2);
+            cryingCtx.fillRect(-s*1.6, -s/2, s*3.2, s);
             cryingCtx.restore();
         });
 
         cryingCtx.restore();
 
-        cryingAnimId = requestAnimationFrame(animateCryingBrick);
+        /* 사고를 친 범인의 발이 화면 가장자리에 살짝 보이도록 */
+        drawCatPaw(cryingCtx, cryingWidth - 6, 48, 0.58, -0.96);
     }
 
-    function shareResult() {
-        const text = `🐾 [그 손가락이 문제였어요]\n도미노를 ${score}개 연속으로 세웠어요! 함께 세워볼까요?`;
-        if (navigator.share) {
-            navigator.share({ title: '그 손가락이 문제였어요', text: text, url: window.location.href }).catch(() => {});
-        } else {
-            navigator.clipboard.writeText(text);
-            alert('결과가 클립보드에 복사되었습니다! 친구들에게 공유해보세요.');
-        }
-    }
-
-    function inviteFriends() {
-        const inviteText = `🎮 세상에서 가장 귀여운 도미노 세우기 게임!\n'그 손가락이 문제였어요 🐾'\n지금 도전해 보세요!`;
-        if (navigator.share) {
-            navigator.share({ title: '그 손가락이 문제였어요', text: inviteText, url: window.location.href }).catch(() => {});
-        } else {
-            navigator.clipboard.writeText(`${inviteText}\n${window.location.href}`);
-            alert('초대 메시지와 링크가 클립보드에 복사되었습니다!');
-        }
-    }
-
+    // 🔥 콤보(COMBO) 그래픽 팝업 렌더링 함수
     function drawComboGraphic() {
         if (combo < 2) return;
 
         ctx.save();
-        const cx = canvas.width / 2;
+        const cx = viewWidth / 2;
         const cy = 180;
 
-        comboAnimScale = Math.max(1.0, comboAnimScale - 0.05);
+        // 스케일 감쇄 애니메이션
+        if (!isBugReportOpen) comboAnimScale = Math.max(1.0, comboAnimScale - 0.05);
 
         ctx.translate(cx, cy);
         ctx.scale(comboAnimScale, comboAnimScale);
 
-        ctx.font = '900 28px "GmarketSansMedium", sans-serif';
+        ctx.font = '900 25px "GmarketSansMedium", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        const comboText = combo >= 5 ? `🔥 ${combo} PERFECT COMBO!` : `✨ ${combo} COMBO!`;
+        const comboText = combo >= 5 ? `🔥 ${combo} 완벽 콤보!` : `🐾 ${combo} 냥콤보!`;
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.fillText(comboText, 3, 3);
+        const metrics = ctx.measureText(comboText);
+        const pillWidth = metrics.width + 34;
+        const pillGradient = ctx.createLinearGradient(-pillWidth / 2, 0, pillWidth / 2, 0);
+        pillGradient.addColorStop(0, 'rgba(255,255,255,0.9)');
+        pillGradient.addColorStop(1, 'rgba(255,248,225,0.9)');
+        ctx.fillStyle = pillGradient;
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth = 2;
+        roundedPath(ctx, -pillWidth / 2, -24, pillWidth, 48, 24);
+        ctx.fill();
+        ctx.stroke();
 
-        ctx.fillStyle = combo >= 5 ? '#D63031' : '#6C5CE7';
-        ctx.fillText(comboText, 0, 0);
-
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(64,41,82,0.18)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 5;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
         ctx.strokeText(comboText, 0, 0);
+        ctx.fillStyle = combo >= 5 ? '#e94b5f' : '#7357e8';
+        ctx.fillText(comboText, 0, 0);
 
         ctx.restore();
     }
 
     function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, viewWidth, viewHeight);
 
         ctx.save();
 
@@ -1222,48 +1737,55 @@
         let cameraOffsetX = 0;
         if (dominos.length > 0) {
             const lastDomino = dominos[dominos.length - 1];
-            if (lastDomino.x > canvas.width * 0.55) {
-                cameraOffsetX = canvas.width * 0.55 - lastDomino.x;
+            if (lastDomino.x > viewWidth * 0.55) {
+                cameraOffsetX = viewWidth * 0.55 - lastDomino.x;
             }
         }
 
         ctx.translate(shakeX, shakeY);
 
         // 1. 바닥 트랙
-        const floorY = canvas.height - 150;
-        ctx.fillStyle = '#FFEAA7';
-        ctx.fillRect(-2000, floorY, 10000, canvas.height - floorY);
+        const floorY = viewHeight - 150;
+        drawSceneBackground(floorY, cameraOffsetX);
 
-        ctx.beginPath();
-        ctx.moveTo(-2000, floorY);
-        ctx.lineTo(10000, floorY);
-        ctx.strokeStyle = '#FDCB6E';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // 2. ☁️ 구름
+        // 2. 보너스 하트를 떨어뜨리는 발바닥 모빌
         if (hasCloud) {
-            const cloudX = canvas.width / 2;
+            const cloudX = viewWidth / 2;
             const cloudY = 110;
-            ctx.fillStyle = '#FFFFFF';
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,239,194,0.55)';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(cloudX, cloudY, 28, 0, Math.PI * 2);
-            ctx.arc(cloudX - 24, cloudY + 6, 20, 0, Math.PI * 2);
-            ctx.arc(cloudX + 24, cloudY + 6, 20, 0, Math.PI * 2);
-            ctx.arc(cloudX - 10, cloudY + 12, 18, 0, Math.PI * 2);
-            ctx.arc(cloudX + 10, cloudY + 12, 18, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(cloudX, 0);
+            ctx.lineTo(cloudX, cloudY - 30);
+            ctx.stroke();
 
-            ctx.fillStyle = '#B2BEC3';
-            ctx.beginPath();
-            ctx.arc(cloudX - 8, cloudY + 2, 2, 0, Math.PI * 2);
-            ctx.arc(cloudX + 8, cloudY + 2, 2, 0, Math.PI * 2);
+            ctx.shadowColor = 'rgba(27,19,36,0.24)';
+            ctx.shadowBlur = 14;
+            ctx.shadowOffsetY = 7;
+            const cushion = ctx.createLinearGradient(cloudX - 36, cloudY - 26, cloudX + 36, cloudY + 30);
+            cushion.addColorStop(0, '#fff4da');
+            cushion.addColorStop(1, '#e8d0c8');
+            ctx.fillStyle = cushion;
+            ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+            ctx.lineWidth = 3;
+            roundedPath(ctx, cloudX - 42, cloudY - 29, 84, 58, 26);
             ctx.fill();
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            drawPawStamp(ctx, cloudX, cloudY, 18, '#df7e83', -0.08);
+            ctx.fillStyle = 'rgba(58,43,66,0.72)';
+            ctx.beginPath();
+            ctx.arc(cloudX - 27, cloudY - 4, 2, 0, Math.PI * 2);
+            ctx.arc(cloudX + 27, cloudY - 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
         }
 
         // 3. 파티클 이펙트
         particles.forEach((p, i) => {
-            p.update();
+            if (!isBugReportOpen) p.update();
             p.draw(cameraOffsetX);
             if (p.alpha <= 0) particles.splice(i, 1);
         });
@@ -1272,7 +1794,7 @@
         ctx.save();
         ctx.translate(cameraOffsetX, 0);
         dominos.forEach((d) => {
-            if (d.isFalling && d.angle < 75) {
+            if (!isBugReportOpen && d.isFalling && d.angle < 75) {
                 d.angle += 8;
             }
             d.draw();
@@ -1282,29 +1804,29 @@
         // 5. ❤️ 떨어지는 하트
         for (let i = fallingHearts.length - 1; i >= 0; i--) {
             let heart = fallingHearts[i];
-            heart.update();
-            heart.draw(cameraOffsetX);
+            if (!isBugReportOpen) heart.update();
+            heart.draw();
 
-            if (heart.y >= floorY - 20) {
+            if (!isBugReportOpen && heart.y >= floorY - 20) {
                 fallingHearts.splice(i, 1);
                 triggerExplosionGameOver();
             }
         }
 
-        // 6. 🔥 콤보 그래픽
+        // 6. 🔥 콤보 그래픽 출력
         drawComboGraphic();
 
-        // 7. 💥 폭발 연출
+        // 7. 💥 화면 대폭발 연출
         if (isExploding) {
-            explosionRadius += 25;
+            if (!isBugReportOpen) explosionRadius += 25;
             ctx.fillStyle = `rgba(214, 48, 49, ${Math.max(0, 1 - explosionRadius / 600)})`;
             ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, explosionRadius, 0, Math.PI * 2);
+            ctx.arc(viewWidth / 2, viewHeight / 2, explosionRadius, 0, Math.PI * 2);
             ctx.fill();
 
             screenShake = 15;
 
-            if (explosionRadius > canvas.width * 1.5) {
+            if (explosionRadius > viewWidth * 1.5) {
                 isExploding = false;
                 endGame();
             }
@@ -1312,8 +1834,8 @@
 
         ctx.restore();
 
-        // 8. 슬라이더 이동
-        if (gameState === 'PLAYING') {
+        // 8. 슬라이더 애니메이션
+        if (gameState === 'PLAYING' && !isBugReportOpen) {
             sliderPos += sliderSpeed * sliderDirection;
             if (sliderPos >= 100 || sliderPos <= 0) {
                 sliderDirection *= -1;
