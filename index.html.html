@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>그 손가락이 문제였어요 - 귀여운 도미노</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'GmarketSansMedium', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+        }
+
+        body {
+            background-color: #2b2636;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 스마트폰 앱 프레임 */
+        #app {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 880px;
+            background: linear-gradient(180deg, #E0F7FA 0%, #FFF9C4 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            border-radius: 20px;
+        }
+
+        /* 캔버스 레이어링 */
+        #bgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: block;
+        }
+
+        /* 상단 HUD */
+        header {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .grac-badge {
+            background: rgba(255, 255, 255, 0.85);
+            color: #6C5CE7;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .hud-area {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .score-board {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4A4E69;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 6px 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .score-board span {
+            color: #FF7675;
+            font-size: 16px;
+        }
+
+        /* 생명 하트 바 */
+        .hp-board {
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 6px 12px;
+            border-radius: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .heart-container {
+            width: 22px;
+            height: 22px;
+            position: relative;
+        }
+
+        .heart-bg {
+            font-size: 18px;
+            opacity: 0.25;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .heart-fill {
+            font-size: 18px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            width: 100%;
+            transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* 화면 레이어 오버레이 */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 243, 228, 0.93);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            z-index: 20;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .title-text {
+            font-size: 30px;
+            font-weight: 900;
+            color: #2D3436;
+            margin-bottom: 6px;
+            text-align: center;
+            line-height: 1.25;
+        }
+
+        .subtitle-text {
+            font-size: 14px;
+            color: #6C5CE7;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        /* 울고 있는 브릭 캔버스 */
+        #cryingBrickCanvas {
+            width: 120px;
+            height: 130px;
+            margin-bottom: 12px;
+        }
+
+        .best-score {
+            font-size: 14px;
+            color: #636E72;
+            margin-bottom: 20px;
+            background: #FFF;
+            padding: 10px 28px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .best-score strong {
+            font-size: 26px;
+            color: #FF7675;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .btn-main {
+            width: 100%;
+            max-width: 280px;
+            padding: 16px;
+            background: linear-gradient(135deg, #FF7675 0%, #D63031 100%);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 118, 117, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .btn-main:active {
+            transform: scale(0.96);
+        }
+
+        .btn-sub {
+            width: 100%;
+            max-width: 280px;
+            padding: 12px;
+            background: #FFF;
+            color: #636E72;
+            border: 2px solid #E0E0E0;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-sub:active {
+            background-color: #F5F5F5;
+        }
+
+        /* 친구에게 소개하기 버튼 스타일 */
+        .btn-invite {
+            background: #6C5CE7;
+            color: #FFF;
+            border: none;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+        }
+
+        .btn-invite:active {
+            background-color: #5B4BC4;
+        }
+
+        /* 하단 조작계 */
+        .controls-area {
+            position: absolute;
+            bottom: 36px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .brick-info-tag {
+            font-size: 12px;
+            font-weight: bold;
+            color: #6C5CE7;
+            background: #FFF;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .timing-bar-container {
+            width: 80%;
+            height: 22px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+            border: 3px solid #FFF;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .target-zone {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #00B894 0%, #55E6C1 100%);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .slider-pin {
+            position: absolute;
+            top: 0;
+            width: 8px;
+            height: 100%;
+            background: #FF7675;
+            border-radius: 4px;
+            box-shadow: 0 0 8px #FF7675;
+        }
+
+        .tap-instruction {
+            font-size: 13px;
+            font-weight: bold;
+            color: #2D3436;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 18px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            animation: bounce 1.2s infinite alternate;
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-4px); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header>
+        <div class="grac-badge">🎮 전체이용가</div>
+        <div class="hud-area">
+            <div class="score-board">세운 도미노: <span id="currentScore">0</span>개</div>
+            <div class="hp-board">
+                <div class="heart-container"><span class="heart-bg">❤️</span><span id="heart0" class="heart-fill">❤️</span></div>
+                <div class="heart-container"><span class="heart-bg">❤️</span><span id="heart1" class="heart-fill">❤️</span></div>
+                <div class="heart-container"><span class="heart-bg">❤️</span><span id="heart2" class="heart-fill">❤️</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1. 배경 산 & 바나나 연출 캔버스 -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- 2. 게임 메인 캔버스 -->
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="controls" class="controls-area hidden">
+        <div id="brickTag" class="brick-info-tag">📏 보통 도미노</div>
+        <div class="timing-bar-container">
+            <div id="targetZone" class="target-zone"></div>
+            <div id="sliderPin" class="slider-pin"></div>
+        </div>
+        <div class="tap-instruction">✨ 터치해서 도미노 세우기!</div>
+    </div>
+
+    <!-- 시작 화면 -->
+    <div id="startScreen" class="overlay-screen">
+        <h1 class="title-text">그 손가락이<br>문제였어요 🐾</h1>
+        <p class="subtitle-text">(귀여운 도미노 세우기)</p>
+        
+        <div class="best-score">
+            최고 연속 기록
+            <strong id="startBestScore">0개</strong>
+        </div>
+
+        <button class="btn-main" onclick="startGame()">도미노 세우기 시작</button>
+    </div>
+
+    <!-- 엔딩 화면 -->
+    <div id="endScreen" class="overlay-screen hidden">
+        <h1 class="title-text">GAME OVER 💥</h1>
+        <p class="subtitle-text">도미노가 모두 무너졌어요!</p>
+        
+        <canvas id="cryingBrickCanvas"></canvas>
+
+        <div class="best-score">
+            이번에 세운 도미노
+            <strong id="finalScore">0개</strong>
+        </div>
+
+        <button class="btn-main" onclick="startGame()">다시 세우기</button>
+        <button class="btn-sub" onclick="shareResult()">결과 공유하기</button>
+        <button class="btn-sub btn-invite" onclick="inviteFriends()">친구에게 소개하기 💌</button>
+    </div>
+</div>
+
+<script>
+    /* ===================================================
+     * 1. 🍌 배경 산골짜기 & 바나나 튀어나오는 연출 로직
+     * =================================================== */
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+
+    let clouds = [];
+    let mountains = [];
+    let bananas = [];
+    let lastBananaTime = 0;
+    let nextBananaDelay = 1000;
+
+    function initBg() {
+        resizeBgCanvas();
+        createClouds();
+        createMountains();
+        requestAnimationFrame(animateBg);
+    }
+
+    function resizeBgCanvas() {
+        const rect = bgCanvas.parentElement.getBoundingClientRect();
+        bgCanvas.width = rect.width;
+        bgCanvas.height = rect.height;
+        createClouds();
+        createMountains();
+    }
+
+    function createClouds() {
+        clouds = [
+            { x: bgCanvas.width * 0.1, y: bgCanvas.height * 0.15, size: 28, speed: 0.2 },
+            { x: bgCanvas.width * 0.5, y: bgCanvas.height * 0.08, size: 36, speed: 0.15 },
+            { x: bgCanvas.width * 0.8, y: bgCanvas.height * 0.22, size: 24, speed: 0.25 }
+        ];
+    }
+
+    function createMountains() {
+        mountains = [
+            {
+                color: '#A1E8AF',
+                borderColor: '#81C784',
+                peakX: bgCanvas.width * 0.25,
+                peakY: bgCanvas.height * 0.48,
+                leftX: -bgCanvas.width * 0.2,
+                rightX: bgCanvas.width * 0.7,
+                baseY: bgCanvas.height
+            },
+            {
+                color: '#B9F6CA',
+                borderColor: '#A1E8AF',
+                peakX: bgCanvas.width * 0.75,
+                peakY: bgCanvas.height * 0.45,
+                leftX: bgCanvas.width * 0.3,
+                rightX: bgCanvas.width * 1.2,
+                baseY: bgCanvas.height
+            },
+            {
+                color: '#81C784',
+                borderColor: '#66BB6A',
+                peakX: bgCanvas.width * 0.5,
+                peakY: bgCanvas.height * 0.58,
+                leftX: -bgCanvas.width * 0.1,
+                rightX: bgCanvas.width * 1.1,
+                baseY: bgCanvas.height
+            },
+            {
+                color: '#66BB6A',
+                borderColor: '#4CAF50',
+                peakX: bgCanvas.width * 0.15,
+                peakY: bgCanvas.height * 0.68,
+                leftX: -bgCanvas.width * 0.3,
+                rightX: bgCanvas.width * 0.6,
+                baseY: bgCanvas.height
+            },
+            {
+                color: '#52B788',
+                borderColor: '#40916C',
+                peakX: bgCanvas.width * 0.82,
+                peakY: bgCanvas.height * 0.65,
+                leftX: bgCanvas.width * 0.4,
+                rightX: bgCanvas.width * 1.2,
+                baseY: bgCanvas.height
+            }
+        ];
+    }
+
+    class PopUpBanana {
+        constructor() {
+            const sourceMountain = mountains[Math.floor(Math.random() * mountains.length)];
+            
+            this.startX = sourceMountain.peakX + (Math.random() - 0.5) * 60;
+            this.startY = sourceMountain.peakY + 20;
+
+            this.x = this.startX;
+            this.y = this.startY;
+
+            this.vx = (Math.random() - 0.5) * 4;
+            this.vy = -(10 + Math.random() * 5);
+            this.gravity = 0.38;
+
+            this.angle = Math.random() * Math.PI * 2;
+            this.rotSpeed = (Math.random() - 0.5) * 0.15;
+            this.scale = 0.8 + Math.random() * 0.4;
+            this.faceType = Math.floor(Math.random() * 3);
+
+            this.isDead = false;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += this.gravity;
+            this.angle += this.rotSpeed;
+
+            if (this.y > bgCanvas.height + 50) {
+                this.isDead = true;
+            }
+        }
+
+        draw() {
+            bgCtx.save();
+            bgCtx.translate(this.x, this.y);
+            bgCtx.rotate(this.angle);
+            bgCtx.scale(this.scale, this.scale);
+
+            bgCtx.beginPath();
+            bgCtx.moveTo(-20, -5);
+            bgCtx.quadraticCurveTo(0, -25, 20, -5);
+            bgCtx.quadraticCurveTo(5, 20, -20, -5);
+            bgCtx.fillStyle = '#FFE033';
+            bgCtx.fill();
+
+            bgCtx.strokeStyle = '#FBC02D';
+            bgCtx.lineWidth = 2.5;
+            bgCtx.stroke();
+
+            bgCtx.fillStyle = '#7CB342';
+            bgCtx.beginPath();
+            bgCtx.arc(-20, -5, 3, 0, Math.PI * 2);
+            bgCtx.arc(20, -5, 2.5, 0, Math.PI * 2);
+            bgCtx.fill();
+
+            bgCtx.fillStyle = '#2E7D32';
+            bgCtx.strokeStyle = '#2E7D32';
+            bgCtx.lineWidth = 1.5;
+
+            if (this.faceType === 0) {
+                bgCtx.beginPath();
+                bgCtx.arc(-5, -2, 2, Math.PI, 0);
+                bgCtx.arc(5, -2, 2, Math.PI, 0);
+                bgCtx.stroke();
+            } else if (this.faceType === 1) {
+                bgCtx.beginPath();
+                bgCtx.arc(-5, -2, 2, 0, Math.PI * 2);
+                bgCtx.arc(5, -2, 2, 0, Math.PI * 2);
+                bgCtx.fill();
+            } else {
+                bgCtx.beginPath();
+                bgCtx.arc(5, -2, 2, Math.PI, 0);
+                bgCtx.stroke();
+
+                bgCtx.beginPath();
+                bgCtx.moveTo(-7, -4); bgCtx.lineTo(-3, -2); bgCtx.lineTo(-7, 0);
+                bgCtx.stroke();
+            }
+
+            bgCtx.fillStyle = 'rgba(255, 138, 128, 0.7)';
+            bgCtx.beginPath();
+            bgCtx.arc(-7, 2, 2, 0, Math.PI * 2);
+            bgCtx.arc(7, 2, 2, 0, Math.PI * 2);
+            bgCtx.fill();
+
+            bgCtx.restore();
+        }
+    }
+
+    function drawCloud(cloud) {
+        bgCtx.save();
+        bgCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        bgCtx.beginPath();
+        bgCtx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+        bgCtx.arc(cloud.x - cloud.size * 0.7, cloud.y + 4, cloud.size * 0.65, 0, Math.PI * 2);
+        bgCtx.arc(cloud.x + cloud.size * 0.7, cloud.y + 4, cloud.size * 0.65, 0, Math.PI * 2);
+        bgCtx.fill();
+        bgCtx.restore();
+
+        cloud.x += cloud.speed;
+        if (cloud.x - cloud.size * 2 > bgCanvas.width) {
+            cloud.x = -cloud.size * 2;
+        }
+    }
+
+    function drawMountain(m) {
+        bgCtx.save();
+        bgCtx.beginPath();
+        bgCtx.moveTo(m.leftX, m.baseY);
+        bgCtx.quadraticCurveTo((m.leftX + m.peakX) / 2, m.peakY, m.peakX, m.peakY);
+        bgCtx.quadraticCurveTo((m.peakX + m.rightX) / 2, m.peakY, m.rightX, m.baseY);
+        bgCtx.closePath();
+
+        bgCtx.fillStyle = m.color;
+        bgCtx.fill();
+
+        bgCtx.strokeStyle = m.borderColor;
+        bgCtx.lineWidth = 4;
+        bgCtx.stroke();
+
+        bgCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        bgCtx.beginPath();
+        bgCtx.arc(m.peakX, m.peakY + 12, 6, 0, Math.PI * 2);
+        bgCtx.fill();
+
+        bgCtx.restore();
+    }
+
+    function animateBg(timestamp) {
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+        let skyGrad = bgCtx.createLinearGradient(0, 0, 0, bgCanvas.height);
+        skyGrad.addColorStop(0, '#E0F7FA');
+        skyGrad.addColorStop(0.6, '#FFF9C4');
+        skyGrad.addColorStop(1, '#C8E6C9');
+        bgCtx.fillStyle = skyGrad;
+        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+        clouds.forEach(drawCloud);
+
+        drawMountain(mountains[0]);
+        drawMountain(mountains[1]);
+
+        if (timestamp - lastBananaTime > nextBananaDelay) {
+            bananas.push(new PopUpBanana());
+            lastBananaTime = timestamp;
+            nextBananaDelay = 1200 + Math.random() * 1800;
+        }
+
+        for (let i = bananas.length - 1; i >= 0; i--) {
+            let b = bananas[i];
+            b.update();
+            b.draw();
+
+            if (b.isDead) {
+                bananas.splice(i, 1);
+            }
+        }
+
+        drawMountain(mountains[2]);
+        drawMountain(mountains[3]);
+        drawMountain(mountains[4]);
+
+        requestAnimationFrame(animateBg);
+    }
+
+
+    /* ===================================================
+     * 2. 🎮 메인 도미노 게임 로직
+     * =================================================== */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const startScreen = document.getElementById('startScreen');
+    const endScreen = document.getElementById('endScreen');
+    const controlsArea = document.getElementById('controls');
+    const currentScoreEl = document.getElementById('currentScore');
+    const startBestScoreEl = document.getElementById('startBestScore');
+    const finalScoreEl = document.getElementById('finalScore');
+    const targetZone = document.getElementById('targetZone');
+    const sliderPin = document.getElementById('sliderPin');
+    const brickTag = document.getElementById('brickTag');
+    const cryingCanvas = document.getElementById('cryingBrickCanvas');
+    const cryingCtx = cryingCanvas.getContext('2d');
+
+    const heartElements = [
+        document.getElementById('heart0'),
+        document.getElementById('heart1'),
+        document.getElementById('heart2')
+    ];
+
+    let gameState = 'START';
+    let dominos = [];
+    let particles = [];
+    let fallingHearts = [];
+    let score = 0;
+    let combo = 0;
+    let comboAnimScale = 0;
+    let bestScore = localStorage.getItem('domino_best') || 0;
+    
+    const MAX_HP = 9;
+    let currentHp = MAX_HP;
+    let screenShake = 0;
+    let hasCloud = false;
+
+    let isExploding = false;
+    let explosionRadius = 0;
+
+    let sliderPos = 0;
+    let sliderDirection = 1;
+    let sliderSpeed = 2.0;
+    let targetStart = 35;
+    let targetWidth = 30;
+
+    let nextBrickConfig = { height: 75, name: '보통 도미노', baseWidth: 28 };
+
+    // 💧 울고 있는 브릭의 눈물 애니메이션 상태 관리 변수
+    let cryingAnimId = null;
+    let tearDrops = [];
+
+    function init() {
+        resizeCanvas();
+        initBg();
+        startBestScoreEl.innerText = `${bestScore}개`;
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            resizeBgCanvas();
+        });
+        canvas.addEventListener('pointerdown', handleCanvasClick);
+    }
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        cryingCanvas.width = 120;
+        cryingCanvas.height = 130;
+    }
+
+    class CuteDomino {
+        constructor(x, y, heightConfig, colorTheme) {
+            this.x = x;
+            this.y = y;
+            this.width = 18;
+            this.height = heightConfig.height;
+            this.angle = 0;
+            this.colorTheme = colorTheme;
+            this.isFalling = false;
+            this.faceType = Math.floor(Math.random() * 3);
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle * Math.PI / 180);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.beginPath();
+            ctx.ellipse(0, 4, this.width * 1.1, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = this.colorTheme.main;
+            this.drawRoundRect(-this.width/2, -this.height, this.width, this.height, 8);
+            ctx.fill();
+
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2.5;
+            this.drawRoundRect(-this.width/2, -this.height, this.width, this.height, 8);
+            ctx.stroke();
+
+            ctx.fillStyle = '#2D3436';
+            const faceY = -this.height + 20;
+
+            if (this.faceType === 0) {
+                ctx.beginPath();
+                ctx.arc(-3, faceY, 1.8, 0, Math.PI * 2);
+                ctx.arc(3, faceY, 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(0, faceY + 2, 2.5, 0, Math.PI);
+                ctx.stroke();
+            } else if (this.faceType === 1) {
+                ctx.beginPath();
+                ctx.arc(-3.5, faceY, 2, 0, Math.PI * 2);
+                ctx.arc(3.5, faceY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.arc(-3, faceY, 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(3, faceY, 2, Math.PI, 0);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = 'rgba(255, 118, 117, 0.6)';
+            ctx.beginPath();
+            ctx.arc(-5, faceY + 4, 2, 0, Math.PI * 2);
+            ctx.arc(5, faceY + 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        drawRoundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+    }
+
+    class FallingHeart {
+        constructor(startX, startY) {
+            this.x = startX;
+            this.y = startY;
+            this.size = 28;
+            this.speedY = 1.8 + Math.random() * 1.2;
+            this.swingAmp = 20 + Math.random() * 25;
+            this.swingFreq = 0.05 + Math.random() * 0.04;
+            this.time = Math.random() * 100;
+        }
+
+        update() {
+            this.time += 1;
+            this.y += this.speedY;
+            this.x += Math.sin(this.time * this.swingFreq) * (this.swingAmp * 0.05);
+        }
+
+        draw(cameraX) {
+            ctx.save();
+            ctx.translate(this.x + cameraX, this.y);
+            const scale = 1 + Math.sin(this.time * 0.1) * 0.08;
+            ctx.scale(scale, scale);
+
+            ctx.font = `${this.size}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('❤️', 0, 0);
+            
+            ctx.strokeStyle = 'rgba(255, 118, 117, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        isTouched(touchX, touchY, cameraX) {
+            const screenX = this.x + cameraX;
+            const dist = Math.hypot(screenX - touchX, this.y - touchY);
+            return dist < this.size * 1.2;
+        }
+    }
+
+    class StarParticle {
+        constructor(x, y, color = null) {
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random() - 0.5) * 6;
+            this.vy = (Math.random() - 0.8) * 6;
+            this.alpha = 1.0;
+            this.size = Math.random() * 5 + 3;
+            this.color = color || ['#FF7675', '#00CEC9', '#FFEAA7', '#6C5CE7'][Math.floor(Math.random() * 4)];
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= 0.03;
+        }
+
+        draw(cameraX = 0) {
+            if (this.alpha <= 0) return;
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x + cameraX, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function generateNextBrickConfig() {
+        const rand = Math.random();
+        if (rand < 0.25) {
+            return { height: 50, name: '📐 숏 도미노', baseWidth: 16 };
+        } else if (rand < 0.70) {
+            return { height: 75, name: '📏 보통 도미노', baseWidth: 28 };
+        } else if (rand < 0.90) {
+            return { height: 105, name: '🦒 긴 도미노', baseWidth: 42 };
+        } else {
+            return { height: 135, name: '🐘 자이언트 도미노', baseWidth: 55 };
+        }
+    }
+
+    function updateHpUI() {
+        for (let i = 0; i < 3; i++) {
+            let heartHp = Math.max(0, Math.min(3, currentHp - (i * 3)));
+            heartElements[i].style.width = `${(heartHp / 3) * 100}%`;
+        }
+    }
+
+    function startGame() {
+        if (cryingAnimId) {
+            cancelAnimationFrame(cryingAnimId);
+            cryingAnimId = null;
+        }
+
+        score = 0;
+        combo = 0;
+        comboAnimScale = 0;
+        currentHp = MAX_HP;
+        dominos = [];
+        particles = [];
+        fallingHearts = [];
+        hasCloud = false;
+        isExploding = false;
+        explosionRadius = 0;
+        sliderPos = 0;
+        sliderSpeed = 2.2;
+        sliderDirection = 1;
+        gameState = 'PLAYING';
+
+        startScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        controlsArea.classList.remove('hidden');
+        
+        currentScoreEl.innerText = score;
+        updateHpUI();
+        
+        nextBrickConfig = generateNextBrickConfig();
+        updateTargetZone();
+        addDomino();
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    function updateTargetZone() {
+        let lengthBonus = nextBrickConfig.baseWidth;
+        let difficultyPenalty = Math.floor(score / 6) * 1.5;
+        
+        targetWidth = Math.max(12, lengthBonus - difficultyPenalty);
+        targetStart = Math.random() * (90 - targetWidth);
+
+        targetZone.style.left = targetStart + '%';
+        targetZone.style.width = targetWidth + '%';
+        brickTag.innerText = nextBrickConfig.name;
+    }
+
+    function handleCanvasClick(e) {
+        if (gameState !== 'PLAYING') return;
+
+        const rect = canvas.getBoundingClientRect();
+        const touchX = e.clientX - rect.left;
+        const touchY = e.clientY - rect.top;
+
+        let cameraX = 0;
+        if (dominos.length > 0) {
+            const lastDomino = dominos[dominos.length - 1];
+            if (lastDomino.x > canvas.width * 0.55) {
+                cameraX = canvas.width * 0.55 - lastDomino.x;
+            }
+        }
+
+        for (let i = fallingHearts.length - 1; i >= 0; i--) {
+            let heart = fallingHearts[i];
+            if (heart.isTouched(touchX, touchY, cameraX)) {
+                fallingHearts.splice(i, 1);
+                currentHp = Math.min(MAX_HP, currentHp + 3);
+                updateHpUI();
+
+                for (let k = 0; k < 12; k++) {
+                    particles.push(new StarParticle(touchX - cameraX, touchY, '#FF7675'));
+                }
+                return;
+            }
+        }
+
+        handleTimingTap();
+    }
+
+    function handleTimingTap() {
+        const success = (sliderPos >= targetStart && sliderPos <= (targetStart + targetWidth));
+
+        if (success) {
+            score++;
+            combo++;
+            comboAnimScale = 1.6;
+
+            currentScoreEl.innerText = score;
+            
+            if (score >= 5) {
+                hasCloud = true;
+            }
+
+            if (score % 10 === 0) {
+                const cloudX = canvas.width / 2;
+                fallingHearts.push(new FallingHeart(cloudX, 150));
+            }
+
+            const lastDomino = dominos[dominos.length - 1];
+            if (lastDomino) {
+                const pCount = Math.min(8 + combo * 2, 20);
+                for (let i = 0; i < pCount; i++) {
+                    particles.push(new StarParticle(lastDomino.x, canvas.height - 150 - lastDomino.height));
+                }
+            }
+
+            sliderSpeed = 2.2 + Math.min(score * 0.12, 5.5);
+            nextBrickConfig = generateNextBrickConfig();
+            addDomino();
+            updateTargetZone();
+        } else {
+            combo = 0;
+            comboAnimScale = 0;
+
+            screenShake = 10;
+            currentHp -= 3;
+            if (currentHp < 0) currentHp = 0;
+            updateHpUI();
+
+            if (currentHp <= 0) {
+                triggerCollapse();
+            } else {
+                sliderSpeed = Math.max(2.2, sliderSpeed - 0.4);
+                nextBrickConfig = generateNextBrickConfig();
+                updateTargetZone();
+            }
+        }
+    }
+
+    function addDomino() {
+        const spacing = 36;
+        const startX = 70;
+        const currentX = startX + (dominos.length * spacing);
+
+        const cuteThemes = [
+            { main: '#FF7675' },
+            { main: '#74B9FF' },
+            { main: '#55E6C1' },
+            { main: '#FFEAA7' },
+            { main: '#A29BFE' }
+        ];
+        const selectedTheme = cuteThemes[dominos.length % cuteThemes.length];
+        
+        dominos.push(new CuteDomino(currentX, canvas.height - 150, nextBrickConfig, selectedTheme));
+    }
+
+    function triggerExplosionGameOver() {
+        gameState = 'EXPLODING';
+        isExploding = true;
+        explosionRadius = 10;
+        combo = 0;
+        controlsArea.classList.add('hidden');
+    }
+
+    function triggerCollapse() {
+        gameState = 'COLLAPSIO';
+        combo = 0;
+        controlsArea.classList.add('hidden');
+
+        let index = dominos.length - 1;
+        
+        const collapseInterval = setInterval(() => {
+            if (index >= 0) {
+                dominos[index].isFalling = true;
+                screenShake = 3;
+                index--;
+            } else {
+                clearInterval(collapseInterval);
+                setTimeout(endGame, 800);
+            }
+        }, 75);
+    }
+
+    function endGame() {
+        gameState = 'END';
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('domino_best', bestScore);
+        }
+
+        finalScoreEl.innerText = `${score}개`;
+        endScreen.classList.remove('hidden');
+        
+        // 눈물 입자 데이터 초기화 및 애니메이션 구동 시작
+        tearDrops = [
+            { side: -1, yOffset: 0, speed: 2.2, scale: 1 },
+            { side: 1, yOffset: -12, speed: 2.8, scale: 0.85 }
+        ];
+        animateCryingBrick();
+    }
+
+    /* 💧 눈물이 흐르는 엔딩 브릭 애니메이션 */
+    function animateCryingBrick() {
+        if (gameState !== 'END') return;
+
+        cryingCtx.clearRect(0, 0, cryingCanvas.width, cryingCanvas.height);
+        
+        const cx = cryingCanvas.width / 2;
+        const cy = cryingCanvas.height - 20;
+
+        cryingCtx.save();
+        cryingCtx.translate(cx, cy);
+
+        // 바닥 그림자
+        cryingCtx.fillStyle = 'rgba(0,0,0,0.1)';
+        cryingCtx.beginPath();
+        cryingCtx.ellipse(0, 5, 20, 6, 0, 0, Math.PI * 2);
+        cryingCtx.fill();
+
+        // 브릭 몸통
+        cryingCtx.fillStyle = '#FF7675';
+        cryingCtx.strokeStyle = '#FFFFFF';
+        cryingCtx.lineWidth = 3;
+        
+        const w = 36, h = 85, r = 10;
+        cryingCtx.beginPath();
+        cryingCtx.moveTo(-w/2 + r, -h);
+        cryingCtx.arcTo(w/2, -h, w/2, 0, r);
+        cryingCtx.arcTo(w/2, 0, -w/2, 0, r);
+        cryingCtx.arcTo(-w/2, 0, -w/2, -h, r);
+        cryingCtx.arcTo(-w/2, -h, w/2, -h, r);
+        cryingCtx.closePath();
+        cryingCtx.fill();
+        cryingCtx.stroke();
+
+        // 울상 눈 표현
+        cryingCtx.strokeStyle = '#2D3436';
+        cryingCtx.lineWidth = 2.5;
+
+        cryingCtx.beginPath();
+        cryingCtx.arc(-8, -h + 28, 4, Math.PI, 0);
+        cryingCtx.stroke();
+
+        cryingCtx.beginPath();
+        cryingCtx.arc(8, -h + 28, 4, Math.PI, 0);
+        cryingCtx.stroke();
+
+        // 입 표현
+        cryingCtx.beginPath();
+        cryingCtx.moveTo(-4, -h + 40);
+        cryingCtx.lineTo(0, -h + 36);
+        cryingCtx.lineTo(4, -h + 40);
+        cryingCtx.stroke();
+
+        // 💧 또르르 흘러내리는 눈물 표현
+        const startEyeY = -h + 32;
+        const maxDropY = -10;
+
+        tearDrops.forEach(drop => {
+            drop.yOffset += drop.speed;
+            
+            let currentDropY = startEyeY + drop.yOffset;
+
+            if (currentDropY > maxDropY) {
+                drop.yOffset = 0;
+                currentDropY = startEyeY;
+            }
+
+            const dropX = drop.side * 8;
+            const dropAlpha = Math.min(1, Math.max(0.1, (maxDropY - currentDropY) / (maxDropY - startEyeY)));
+
+            cryingCtx.save();
+            cryingCtx.globalAlpha = dropAlpha;
+            cryingCtx.fillStyle = '#74B9FF';
+            cryingCtx.strokeStyle = '#0984E3';
+            cryingCtx.lineWidth = 1;
+
+            cryingCtx.beginPath();
+            cryingCtx.moveTo(dropX, currentDropY - 5 * drop.scale);
+            cryingCtx.quadraticCurveTo(dropX + 4 * drop.scale, currentDropY + 2 * drop.scale, dropX, currentDropY + 5 * drop.scale);
+            cryingCtx.quadraticCurveTo(dropX - 4 * drop.scale, currentDropY + 2 * drop.scale, dropX, currentDropY - 5 * drop.scale);
+            cryingCtx.fill();
+            cryingCtx.stroke();
+            cryingCtx.restore();
+        });
+
+        cryingCtx.restore();
+
+        cryingAnimId = requestAnimationFrame(animateCryingBrick);
+    }
+
+    function shareResult() {
+        const text = `🐾 [그 손가락이 문제였어요]\n도미노를 ${score}개 연속으로 세웠어요! 함께 세워볼까요?`;
+        if (navigator.share) {
+            navigator.share({ title: '그 손가락이 문제였어요', text: text, url: window.location.href }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(text);
+            alert('결과가 클립보드에 복사되었습니다! 친구들에게 공유해보세요.');
+        }
+    }
+
+    function inviteFriends() {
+        const inviteText = `🎮 세상에서 가장 귀여운 도미노 세우기 게임!\n'그 손가락이 문제였어요 🐾'\n지금 도전해 보세요!`;
+        if (navigator.share) {
+            navigator.share({ title: '그 손가락이 문제였어요', text: inviteText, url: window.location.href }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(`${inviteText}\n${window.location.href}`);
+            alert('초대 메시지와 링크가 클립보드에 복사되었습니다!');
+        }
+    }
+
+    function drawComboGraphic() {
+        if (combo < 2) return;
+
+        ctx.save();
+        const cx = canvas.width / 2;
+        const cy = 180;
+
+        comboAnimScale = Math.max(1.0, comboAnimScale - 0.05);
+
+        ctx.translate(cx, cy);
+        ctx.scale(comboAnimScale, comboAnimScale);
+
+        ctx.font = '900 28px "GmarketSansMedium", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const comboText = combo >= 5 ? `🔥 ${combo} PERFECT COMBO!` : `✨ ${combo} COMBO!`;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.fillText(comboText, 3, 3);
+
+        ctx.fillStyle = combo >= 5 ? '#D63031' : '#6C5CE7';
+        ctx.fillText(comboText, 0, 0);
+
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.strokeText(comboText, 0, 0);
+
+        ctx.restore();
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+
+        let shakeX = (Math.random() - 0.5) * screenShake;
+        let shakeY = (Math.random() - 0.5) * screenShake;
+        if (screenShake > 0) screenShake *= 0.85;
+
+        let cameraOffsetX = 0;
+        if (dominos.length > 0) {
+            const lastDomino = dominos[dominos.length - 1];
+            if (lastDomino.x > canvas.width * 0.55) {
+                cameraOffsetX = canvas.width * 0.55 - lastDomino.x;
+            }
+        }
+
+        ctx.translate(shakeX, shakeY);
+
+        // 1. 바닥 트랙
+        const floorY = canvas.height - 150;
+        ctx.fillStyle = '#FFEAA7';
+        ctx.fillRect(-2000, floorY, 10000, canvas.height - floorY);
+
+        ctx.beginPath();
+        ctx.moveTo(-2000, floorY);
+        ctx.lineTo(10000, floorY);
+        ctx.strokeStyle = '#FDCB6E';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // 2. ☁️ 구름
+        if (hasCloud) {
+            const cloudX = canvas.width / 2;
+            const cloudY = 110;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(cloudX, cloudY, 28, 0, Math.PI * 2);
+            ctx.arc(cloudX - 24, cloudY + 6, 20, 0, Math.PI * 2);
+            ctx.arc(cloudX + 24, cloudY + 6, 20, 0, Math.PI * 2);
+            ctx.arc(cloudX - 10, cloudY + 12, 18, 0, Math.PI * 2);
+            ctx.arc(cloudX + 10, cloudY + 12, 18, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#B2BEC3';
+            ctx.beginPath();
+            ctx.arc(cloudX - 8, cloudY + 2, 2, 0, Math.PI * 2);
+            ctx.arc(cloudX + 8, cloudY + 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 3. 파티클 이펙트
+        particles.forEach((p, i) => {
+            p.update();
+            p.draw(cameraOffsetX);
+            if (p.alpha <= 0) particles.splice(i, 1);
+        });
+
+        // 4. 도미노 렌더링
+        ctx.save();
+        ctx.translate(cameraOffsetX, 0);
+        dominos.forEach((d) => {
+            if (d.isFalling && d.angle < 75) {
+                d.angle += 8;
+            }
+            d.draw();
+        });
+        ctx.restore();
+
+        // 5. ❤️ 떨어지는 하트
+        for (let i = fallingHearts.length - 1; i >= 0; i--) {
+            let heart = fallingHearts[i];
+            heart.update();
+            heart.draw(cameraOffsetX);
+
+            if (heart.y >= floorY - 20) {
+                fallingHearts.splice(i, 1);
+                triggerExplosionGameOver();
+            }
+        }
+
+        // 6. 🔥 콤보 그래픽
+        drawComboGraphic();
+
+        // 7. 💥 폭발 연출
+        if (isExploding) {
+            explosionRadius += 25;
+            ctx.fillStyle = `rgba(214, 48, 49, ${Math.max(0, 1 - explosionRadius / 600)})`;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, explosionRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            screenShake = 15;
+
+            if (explosionRadius > canvas.width * 1.5) {
+                isExploding = false;
+                endGame();
+            }
+        }
+
+        ctx.restore();
+
+        // 8. 슬라이더 이동
+        if (gameState === 'PLAYING') {
+            sliderPos += sliderSpeed * sliderDirection;
+            if (sliderPos >= 100 || sliderPos <= 0) {
+                sliderDirection *= -1;
+            }
+            sliderPin.style.left = sliderPos + '%';
+        }
+
+        if (gameState === 'PLAYING' || gameState === 'COLLAPSIO' || gameState === 'EXPLODING') {
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
